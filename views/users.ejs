@@ -1,0 +1,41 @@
+<%- include('partials/header') %>
+
+<h2 class="mb-4">User List</h2>
+
+<% if (users.length > 0) { %>
+<table class="table table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% users.forEach(user => { %>
+            <tr>
+                <td><%= user.name %></td>
+                <td><%= user.email %></td>
+            </tr>
+        <% }) %>
+    </tbody>
+</table>
+<% } else { %>
+    <p>No users found.</p>
+<% } %>
+
+<hr class="my-5" />
+
+<h3>Add New User</h3>
+<form action="/api/users/add" method="POST" class="row g-3">
+    <div class="col-md-6">
+        <input type="text" name="name" placeholder="Name" class="form-control" required>
+    </div>
+    <div class="col-md-6">
+        <input type="email" name="email" placeholder="Email" class="form-control" required>
+    </div>
+    <div class="col-12">
+        <button type="submit" class="btn btn-success">Add User</button>
+    </div>
+</form>
+
+<%- include('partials/footer') %>
