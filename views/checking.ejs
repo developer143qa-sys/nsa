@@ -1,15 +1,57 @@
-        
-        
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Document</title>
-        </head>
-        <body>
-            <h1>
-                this is checking page
-            </h1>
-        </body>
-        </html>
+<%- include('partials/header') %>
+
+<div class="container mt-5">
+  <h2 class="text-primary fw-bold mb-4">📊 Monthly User Registration Chart</h2>
+
+  <div class="card shadow-sm p-4">
+    <canvas id="userChart" width="600" height="300"></canvas>
+  </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // Fetch the chart data from your API
+  fetch('/api/users/monthly')
+    .then(res => res.json())
+    .then(data => {
+      const ctx = document.getElementById('userChart').getContext('2d');
+
+      const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.labels,
+          datasets: [{
+            label: 'Users Registered',
+            data: data.data,
+            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1,
+            borderRadius: 5
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: true },
+            title: {
+              display: true,
+              text: 'Monthly New Users'
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          }
+        }
+      });
+    })
+    .catch(err => console.error('Chart Load Error:', err));
+</script>
+
+<%- include('partials/footer') %>

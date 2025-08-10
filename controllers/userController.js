@@ -1,12 +1,12 @@
 // controllers/userController.js
-const User = require('../models/User.js');
+const User = require('../models/User');
 
 // GET /api/users
 exports.getUsers = async (req, res) => {
     try {
         const users = await User.find();
         res.render('users', {
-            title: 'User List', // ✅ Fixes <%= title %> error in header.ejs
+            title: 'User List',
             users
         });
     } catch (err) {
@@ -19,8 +19,6 @@ exports.getUsers = async (req, res) => {
 exports.addUser = async (req, res) => {
     try {
         const { name, email } = req.body;
-
-        // Basic validation (optional)
         if (!name || !email) {
             return res.status(400).send('Name and Email are required');
         }
@@ -31,5 +29,24 @@ exports.addUser = async (req, res) => {
     } catch (err) {
         console.error('Error adding user:', err.message);
         res.status(400).send('Failed to add user. Maybe email already exists.');
+    }
+};
+
+// GET /api/users/checking
+exports.checking = async (req, res) => {
+    try {
+        const userCount = await User.countDocuments();
+        res.render('checking', {
+            title: 'System Check',
+            status: '✅ Database connected successfully',
+            userCount
+        });
+    } catch (err) {
+        console.error('Database check failed:', err.message);
+        res.status(500).render('checking', {
+            title: 'System Check',
+            status: '❌ Database not reachable',
+            userCount: 0
+        });
     }
 };

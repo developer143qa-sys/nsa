@@ -1,7 +1,7 @@
 // models/User.js
 const mongoose = require('mongoose');
 
-// Define schema
+// Define schema with timestamps
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -15,12 +15,11 @@ const userSchema = new mongoose.Schema({
         trim: true,
         unique: true,
         lowercase: true,
-        match: [/\S+@\S+\.\S+/, 'Email is invalid']
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
+        match: [/\S+@\S+\.\S+/, 'Email is invalid'],
+        index: true
     }
+}, {
+    timestamps: true // ✅ Automatically adds createdAt and updatedAt
 });
 
 // Create model
