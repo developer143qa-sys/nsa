@@ -32,21 +32,8 @@ exports.addUser = async (req, res) => {
     }
 };
 
-// GET /api/users/checking
-exports.checking = async (req, res) => {
-    try {
-        const userCount = await User.countDocuments();
-        res.render('checking', {
-            title: 'System Check',
-            status: '✅ Database connected successfully',
-            userCount
-        });
-    } catch (err) {
-        console.error('Database check failed:', err.message);
-        res.status(500).render('checking', {
-            title: 'System Check',
-            status: '❌ Database not reachable',
-            userCount: 0
-        });
-    }
-};
+
+
+
+
+

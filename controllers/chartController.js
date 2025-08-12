@@ -1,33 +1,40 @@
-// controllers/chartController.js
 const User = require('../models/User');
 
-exports.getMonthlyUserStats = async (req, res) => {
-  try {
-    const users = await User.aggregate([
-      {
-        $group: {
-          _id: { $month: "$createdAt" },
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { "_id": 1 } }
-    ]);
+const getMonthlyUserData = async (req, res) => {
+    try {
+        const monthlyData = await User.aggregate([
+            {
+                $group: {
+                    _id: {
+                        year: { $year: "$createdAt" },
+                        month: { $month: "$createdAt" }
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $sort: {    
+                    "_id.year": 1,
+                    "_id.month": 1
+                }
+            }
+        ]);
 
-    const monthNames = [
-      "", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-    ];
+        // Optional: Format result for frontend (e.g., for a bullet chart)
+        const formattedData = monthlyData.map(item => ({
+            year: item._id.year,
+            month: item._id.month,
+            userCount: item.count
+        }));
 
-    const labels = users.map(u => monthNames[u._id]);
-    const data = users.map(u => u.count);
+        res.status(200).json({ success: true, data: formattedData });
 
-    res.json({
-      labels,
-      data
-    });
-
-  } catch (error) {
-    console.error('Error in getMonthlyUserStats:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
+    } catch (error) {
+        console.error("Error fetching monthly user data:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
 };
+
+                  module.exports = {
+                   getMonthlyUserData
+                   };

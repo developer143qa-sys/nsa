@@ -23,14 +23,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Home route
 app.get('/', (req, res) => {
-    res.render('index', { title: 'Home' });
+  res.render('index', { title: 'Home' });
 });
 
-// ✅ Use proper routes
+// Use routes from userRoutes
 app.use('/api/users', userRoutes);
 
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
