@@ -47,3 +47,15 @@
         <button type="submit" class="btn btn-success">➕ Add User</button>
     </div>
 </form>
+<hr class="my-5" />
+
+<h3 class="mb-3">📁 Upload Users via CSV</h3>
+<form action="/api/users/upload" method="POST" enctype="multipart/form-data" class="row g-3">
+    <div class="col-md-6">
+        <input type="file" name="csvFile" accept=".csv" class="form-control" required>
+        <div class="invalid-feedback">Please upload a CSV file.</div>
+    </div>
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">⬆️ Upload CSV</button>
+    </div>
+</form>
