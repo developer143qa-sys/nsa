@@ -3,10 +3,13 @@ const bodyParser = require('body-parser');
 const connectDB = require('./config/db');
 const userRoutes = require('./routes/userRoutes');
 const path = require('path');
+const expressLayouts = require('express-ejs-layouts');
 require('dotenv').config();
 
 const app = express();
-const expressLayouts = require('express-ejs-layouts');
+
+// ✅ Define PORT from environment or default to 3000
+const PORT = process.env.PORT || 3000;
 
 // Connect to DB
 connectDB();
@@ -26,11 +29,13 @@ app.get('/', (req, res) => {
   res.render('index', { title: 'Home' });
 });
 
+// Optional: Add health check route for Render (recommended)
+app.get('/healthz', (req, res) => res.send('OK'));
+
 // Use routes from userRoutes
 app.use('/api/users', userRoutes);
 
-// Start server
+// ✅ Bind to 0.0.0.0 for Render
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
 });
-
