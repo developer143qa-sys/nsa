@@ -8,10 +8,10 @@ require('dotenv').config();
 
 const app = express();
 
-// ✅ Define PORT from environment or default to 3000
+// Define PORT from environment or fallback
 const PORT = process.env.PORT || 3000;
 
-// Connect to DB
+// Connect to MongoDB
 connectDB();
 
 // Set EJS as view engine and use layouts
@@ -24,18 +24,16 @@ app.use(expressLayouts);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Home route
+// Routes
 app.get('/', (req, res) => {
   res.render('index', { title: 'Home' });
 });
 
-// Optional: Add health check route for Render (recommended)
 app.get('/healthz', (req, res) => res.send('OK'));
 
-// Use routes from userRoutes
 app.use('/api/users', userRoutes);
 
-// ✅ Bind to 0.0.0.0 for Render
+// Start server, bind to 0.0.0.0 for Render
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
 });
