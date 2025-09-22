@@ -22,8 +22,8 @@ const getMonthlyUserData = async (req, res) => {
 
         // Optional: Format result for frontend (e.g., for a bullet chart)
         const formattedData = monthlyData.map(item => ({
-            year: item._id.year,
-            month: item._id.month,
+            year: item._id.year ,
+            month: item._id.month ,
             userCount: item.count
         }));
 

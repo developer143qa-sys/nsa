@@ -24,16 +24,18 @@ app.use(expressLayouts);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Routes
+// Root route redirecting to /api/users/home
 app.get('/', (req, res) => {
-  res.render('index', { title: 'Home' });
+  res.redirect('/api/users/home');
 });
 
+// Health check route
 app.get('/healthz', (req, res) => res.send('OK'));
 
+// Use user routes under /api/users
 app.use('/api/users', userRoutes);
 
-// Start server, bind to 0.0.0.0 for Render
+// Start server, bind to 0.0.0.0 for hosting platforms like Render
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
 });
