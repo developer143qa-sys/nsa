@@ -1,28 +1,53 @@
 // models/User.js
-const mongoose = require('mongoose');
 
-// Define schema with timestamps
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');   // ✅ Perfect for Node.js 18/20/22
+
 const userSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: [true, 'Name is required'],
-        trim: true,
-        minlength: [2, 'Name must be at least 2 characters long']
-    },
-    email: {
-        type: String,
-        required: [true, 'Email is required'],
-        trim: true,
-        unique: true,
-        lowercase: true,
-        match: [/\S+@\S+\.\S+/, 'Email is invalid'],
-        index: true
-    }
-}, {
-    timestamps: true // ✅ Automatically adds createdAt and updatedAt
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true
+  },
+  password: {
+    type: String,
+    required: true   // ⚠️ Never lowercase password
+  },
+  role: {
+    type: String,
+    enum: ['admin', 'user'],
+    default: 'user'
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
 });
 
-// Create model
-const User = mongoose.model('User', userSchema);
+// 🔐 Hash password before saving (only if modified/new)
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
 
-module.exports = User;
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 🔑 Compare password for login
+userSchema.methods.isValidPassword = async function (candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
+
+module.exports = mongoose.model('User', userSchema);

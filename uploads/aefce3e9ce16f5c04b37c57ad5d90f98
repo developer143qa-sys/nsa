@@ -1,0 +1,5 @@
+qid,fullname,phoneNumber,caseType,reason,postponedDate,batchStartDate,batchEndDate
+1001,Ali Khan,03001234567,completed,, ,2025-11-16,2025-12-16
+1002,Sara Ahmed,03007654321,delay,Completing studies,2025-11-20,2025-11-16,2025-12-16
+1003,Usman Riaz,03009871234,exception,Active duty soldier,,2025-11-18,2025-12-18
+1004,Ayesha Tariq,03005678912,exempted,Medically unfit,,2025-11-16,2025-12-16

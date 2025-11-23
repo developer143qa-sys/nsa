@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Trainee</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+<!-- 🔴 LOGOUT BUTTON (TOP RIGHT) -->
+<div class="container mt-3">
+  <div class="d-flex justify-content-end">
+    <a href="/auth/logout" class="btn btn-danger">Logout</a>
+  </div>
+</div>
+
+<div class="container mt-4">
+  <h1>Add Trainee</h1>
+
+  <!-- Single Trainee Form -->
+  <form id="singleForm" class="mb-4">
+    <h3>Single Trainee</h3>
+
+    <input type="text" name="qid" placeholder="QID" class="form-control mb-2" required>
+    <input type="text" name="fullname" placeholder="Full Name" class="form-control mb-2" required>
+    <input type="text" name="phoneNumber" placeholder="Phone Number" class="form-control mb-2" required>
+
+    <!-- Case Type -->
+    <select name="caseType" id="caseType" class="form-control mb-2" required>
+      <option value="">Select Case Type</option>
+      <option value="completed">Completed</option>
+      <option value="delay">Delay</option>
+      <option value="exception">Exception</option>
+      <option value="exempted">Exempted</option>
+    </select>
+
+    <!-- Reason (dynamic) -->
+    <select name="reason" id="reason" class="form-control mb-2" style="display:none;">
+      <option value="">Select Reason</option>
+    </select>
+
+    <!-- Postponed Date -->
+    <div class="mb-2" id="postponedDiv" style="display:none;">
+      <label for="postponedDate">Postponed Date</label>
+      <input type="date" name="postponedDate" id="postponedDate" class="form-control">
+    </div>
+
+    <!-- Batch Dates -->
+    <div class="mb-2">
+      <label for="batchStartDate">Batch Start Date</label>
+      <input type="date" name="batchStartDate" id="batchStartDate" class="form-control" required>
+    </div>
+
+    <div class="mb-2">
+      <label for="batchEndDate">Batch End Date</label>
+      <input type="date" name="batchEndDate" id="batchEndDate" class="form-control" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Add Trainee</button>
+  </form>
+
+  <!-- CSV Upload -->
+  <form id="csvForm">
+    <h3>Upload CSV</h3>
+    <input type="file" name="csvFile" class="form-control mb-2" accept=".csv" required>
+    <button class="btn btn-success">Upload CSV</button>
+  </form>
+</div>
+
+<script>
+const caseTypeSelect = document.getElementById('caseType');
+const reasonSelect = document.getElementById('reason');
+const postponedDiv = document.getElementById('postponedDiv');
+
+const reasonOptions = {
+  delay: [
+    'Considered as the only son',
+    'Completing studies',
+    'Only child of mother',
+    'Only child of father',
+    'Medical deferment',
+    'Accompanying for study abroad',
+    'Sole supporter of mother',
+    'Sole supporter of disabled siblings'
+  ],
+  exception: [
+    'Active duty soldier',
+    'Completed basic training'
+  ],
+  exempted: [
+    'Medically unfit'
+  ]
+};
+
+// Case Type Logic
+caseTypeSelect.addEventListener('change', () => {
+  const type = caseTypeSelect.value;
+
+  postponedDiv.style.display = type === 'delay' ? 'block' : 'none';
+
+  if (type === 'completed') {
+    reasonSelect.style.display = 'none';
+    reasonSelect.innerHTML = '';
+  } else if (reasonOptions[type]) {
+    reasonSelect.style.display = 'block';
+    reasonSelect.innerHTML = '<option value="">Select Reason</option>';
+    reasonOptions[type].forEach(r => {
+      const option = document.createElement('option');
+      option.value = r;
+      option.text = r;
+      reasonSelect.appendChild(option);
+    });
+  } else {
+    reasonSelect.style.display = 'none';
+    reasonSelect.innerHTML = '';
+  }
+});
+
+// Submit Single Trainee
+document.getElementById('singleForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target).entries());
+
+  try {
+    const res = await fetch('/training/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const text = await res.text();
+    Swal.fire({
+      title: text.includes('success') ? 'Success' : 'Error',
+      text: text,
+      icon: text.includes('success') ? 'success' : 'error'
+    });
+    e.target.reset();
+    reasonSelect.style.display = 'none';
+    postponedDiv.style.display = 'none';
+  } catch(err) {
+    Swal.fire('Error', 'Server error', 'error');
+  }
+});
+
+// CSV Upload
+document.getElementById('csvForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+  try {
+    const res = await fetch('/training/upload-csv', { method: 'POST', body: formData });
+    const text = await res.text();
+    Swal.fire({
+      title: text.includes('success') ? 'Success' : 'Error',
+      text: text,
+      icon: text.includes('success') ? 'success' : 'error'
+    });
+    e.target.reset();
+  } catch(err) {
+    Swal.fire('Error', 'Server error', 'error');
+  }
+});
+</script>
+</body>
+</html>

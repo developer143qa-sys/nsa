@@ -1,0 +1,17 @@
+<form action="/training/update/<%=trainee._id %>" method="POST">
+  <label>Full Name</label>
+  <input type="text" name="fullname" value="<%= trainee.fullname %>" required />
+
+  <label>Phone Number</label>
+  <input type="text" name="phoneNumber" value="<%= trainee.phoneNumber %>" />
+
+  <label>Case Type</label>
+  <select name="caseType">
+    <option value="normal" <%= trainee.caseType === 'normal' ? 'selected' : '' %>>Normal</option>
+    <option value="delay" <%= trainee.caseType === 'delay' ? 'selected' : '' %>>Delay</option>
+    <option value="exception" <%= trainee.caseType === 'exception' ? 'selected' : '' %>>Exception</option>
+    <option value="exempted" <%= trainee.caseType === 'exempted' ? 'selected' : '' %>>Exempted</option>
+  </select>
+
+  <button type="submit">Update</button>
+</form>

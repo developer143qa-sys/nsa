@@ -1,41 +1,58 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const connectDB = require('./config/db');
-const userRoutes = require('./routes/userRoutes');
-const path = require('path');
-const expressLayouts = require('express-ejs-layouts');
 require('dotenv').config();
+const express = require('express');
+const path = require('path');
+const session = require('express-session');
+const cookieParser = require('cookie-parser'); // ✅ added
+const connectDB = require('./config/db');
+
+const traineeRoutes = require('./routes/traineeRoutes');
+const authRoutes = require('./routes/auth'); // 👈 Auth routes
 
 const app = express();
-
-// Define PORT from environment or fallback
 const PORT = process.env.PORT || 3000;
 
+// ----------------------------
 // Connect to MongoDB
+// ----------------------------
 connectDB();
 
-// Set EJS as view engine and use layouts
+// ----------------------------
+// Middleware
+// ----------------------------
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-app.set('layout', 'layout');
 
-// Middleware
-app.use(expressLayouts);
-app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser()); // ✅ important for JWT cookies
 
-// Root route redirecting to /api/users/home
-app.get('/', (req, res) => {
-  res.redirect('/api/users/home');
-});
+// ----------------------------
+// Session setup
+// ----------------------------
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'yourSecretKey',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 1000 * 60 * 60 } // 1 hour
+}));
 
-// Health check route
-app.get('/healthz', (req, res) => res.send('OK'));
+// ----------------------------
+// Routes
+// ----------------------------
+// app.use('/auth', authRoutes); // 👈 Auth routes
+app.use('/auth', authRoutes);
+// no /auth prefix
 
-// Use user routes under /api/users
-app.use('/api/users', userRoutes);
+app.use('/training', traineeRoutes); // Trainee routes
 
-// Start server, bind to 0.0.0.0 for hosting platforms like Render
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
-});
+// Default route
+app.get('/', (req, res) => res.redirect('/auth/login'));
+
+// 404
+app.use((req, res) => res.status(404).send('Page Not Found'));
+
+// ----------------------------
+// Start server
+// ----------------------------
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
