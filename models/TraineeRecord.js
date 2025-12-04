@@ -4,15 +4,27 @@ const traineeRecordSchema = new mongoose.Schema({
   qid: { type: String, required: true, unique: true },
   fullname: { type: String, required: true },
   phoneNumber: { type: String, required: true },
-  caseType: { 
-    type: String, 
-    enum: ['completed', 'delay', 'exception', 'exempted'], 
-    required: true 
+
+  caseType: {
+    type: String,
+    enum: ['completed', 'delay', 'exception', 'exempted'],
+    required: true
   },
-  reason: { type: String }, // Will depend on caseType
-  postponedDate: { type: Date }, // Only for delay
-  batchStartDate: { type: Date }, // Only for exception
-  batchEndDate: { type: Date }, // Only for exception
+
+  // Dynamic fields
+  reason: { type: String },         // delay, exception, exempted only
+
+  postponedDate: { type: Date },    // delay only
+
+  batchNo: { type: String },        // completed + delay only
+
+  forceNo: { type: String },        // exception only
+
+  batchStartDate: { type: Date },   // exception only
+  batchEndDate: { type: Date },     // exception only
+
+  currentDate: { type: Date, default: Date.now },
+
   createdAt: { type: Date, default: Date.now }
 });
 

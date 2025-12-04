@@ -25,6 +25,8 @@ exports.addTrainee = async (req, res) => {
       postponedDate,
       batchStartDate,
       batchEndDate,
+      batchNo,
+      forceNo,
       currentDate
     } = req.body;
 
@@ -35,8 +37,10 @@ exports.addTrainee = async (req, res) => {
       caseType,
       reason: ['delay', 'exception', 'exempted'].includes(caseType) ? reason?.trim() : undefined,
       postponedDate: caseType === 'delay' ? parseDate(postponedDate) : undefined,
-      batchStartDate: parseDate(batchStartDate),
-      batchEndDate: parseDate(batchEndDate),
+      batchNo: ['completed', 'delay'].includes(caseType) ? batchNo : undefined,
+      forceNo: caseType === 'exception' ? forceNo : undefined,
+      batchStartDate: caseType === 'exception' ? parseDate(batchStartDate) : undefined,
+      batchEndDate: caseType === 'exception' ? parseDate(batchEndDate) : undefined,
       currentDate: parseDate(currentDate) || new Date()
     });
 
@@ -62,7 +66,6 @@ exports.uploadCSV = async (req, res) => {
       .pipe(csv())
       .on('data', data => results.push(data))
       .on('end', async () => {
-
         for (const row of results) {
           try {
             const newRecord = new TraineeRecord({
@@ -70,10 +73,14 @@ exports.uploadCSV = async (req, res) => {
               fullname: row.fullname,
               phoneNumber: row.phoneNumber,
               caseType: row.caseType,
-              reason: ['delay', 'exception', 'exempted'].includes(row.caseType) ? row.reason?.trim() : undefined,
+              reason: ['delay', 'exception', 'exempted'].includes(row.caseType)
+                ? row.reason?.trim()
+                : undefined,
               postponedDate: row.caseType === 'delay' ? parseDate(row.postponedDate) : undefined,
-              batchStartDate: parseDate(row.batchStartDate),
-              batchEndDate: parseDate(row.batchEndDate),
+              batchNo: ['completed', 'delay'].includes(row.caseType) ? row.batchNo : undefined,
+              forceNo: row.caseType === 'exception' ? row.forceNo : undefined,
+              batchStartDate: row.caseType === 'exception' ? parseDate(row.batchStartDate) : undefined,
+              batchEndDate: row.caseType === 'exception' ? parseDate(row.batchEndDate) : undefined,
               currentDate: parseDate(row.currentDate) || new Date()
             });
 
@@ -83,10 +90,9 @@ exports.uploadCSV = async (req, res) => {
           }
         }
 
-        fs.unlinkSync(filePath); // delete CSV file after processing
+        fs.unlinkSync(filePath);
         res.send('success');
       });
-
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error: ' + err.message);
@@ -94,24 +100,21 @@ exports.uploadCSV = async (req, res) => {
 };
 
 // ===============================
-// Get All Trainees (Search + CaseType Search + Date Filter + Pagination)
+// Get All Trainees (Admin Dashboard)
 // ===============================
 exports.getAllTrainees = async (req, res) => {
   try {
     const { search, from, to, page } = req.query;
-
     const query = {};
 
-    // 🔍 UPDATED SEARCH: QID + Fullname + CaseType
     if (search) {
       query.$or = [
         { qid: { $regex: search, $options: "i" } },
         { fullname: { $regex: search, $options: "i" } },
-        { caseType: { $regex: search, $options: "i" } }  // <-- NEW SEARCH FIELD
+        { caseType: { $regex: search, $options: "i" } }
       ];
     }
 
-    // Filter by batch start date
     if (from && to) {
       query.batchStartDate = {
         $gte: new Date(from),
@@ -120,10 +123,9 @@ exports.getAllTrainees = async (req, res) => {
     }
 
     const currentPage = parseInt(page) || 1;
-    const limit = 100; 
+    const limit = 100;
     const skip = (currentPage - 1) * limit;
 
-    // Get total count
     const totalRecords = await TraineeRecord.countDocuments(query);
     const totalPages = Math.ceil(totalRecords / limit);
 
@@ -132,6 +134,14 @@ exports.getAllTrainees = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
+    // -------------------------
+    // Count for each caseType
+    // -------------------------
+    const completedCount = await TraineeRecord.countDocuments({ caseType: 'completed' });
+    const delayCount = await TraineeRecord.countDocuments({ caseType: 'delay' });
+    const exceptionCount = await TraineeRecord.countDocuments({ caseType: 'exception' });
+    const exemptedCount = await TraineeRecord.countDocuments({ caseType: 'exempted' });
+
     res.render("admin", {
       trainees,
       search,
@@ -139,9 +149,12 @@ exports.getAllTrainees = async (req, res) => {
       to,
       page: currentPage,
       totalPages,
-      totalTrainees: totalRecords
+      totalTrainees: totalRecords,
+      completedCount,
+      delayCount,
+      exceptionCount,
+      exemptedCount
     });
-
   } catch (err) {
     console.error(err);
     res.status(500).send("Server Error");
@@ -155,7 +168,6 @@ exports.editForm = async (req, res) => {
   try {
     const trainee = await TraineeRecord.findById(req.params.id);
     if (!trainee) return res.status(404).send("Trainee not found");
-
     res.render("editTrainee", { trainee });
   } catch (err) {
     console.error(err);
@@ -176,6 +188,8 @@ exports.updateTrainee = async (req, res) => {
       postponedDate,
       batchStartDate,
       batchEndDate,
+      batchNo,
+      forceNo,
       currentDate
     } = req.body;
 
@@ -184,9 +198,11 @@ exports.updateTrainee = async (req, res) => {
       phoneNumber,
       caseType,
       reason: ['delay', 'exception', 'exempted'].includes(caseType) ? reason?.trim() : undefined,
-      postponedDate: caseType === 'delay' ? parseDate(postponedDate) : undefined,
-      batchStartDate: parseDate(batchStartDate),
-      batchEndDate: parseDate(batchEndDate),
+      postponedDate: caseType === "delay" ? parseDate(postponedDate) : undefined,
+      batchNo: ['completed', 'delay'].includes(caseType) ? batchNo : undefined,
+      forceNo: caseType === "exception" ? forceNo : undefined,
+      batchStartDate: caseType === "exception" ? parseDate(batchStartDate) : undefined,
+      batchEndDate: caseType === "exception" ? parseDate(batchEndDate) : undefined,
       currentDate: parseDate(currentDate)
     });
 

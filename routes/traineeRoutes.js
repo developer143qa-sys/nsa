@@ -21,30 +21,30 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// --------------------------
-// Protect all trainee routes
-// --------------------------
+// --------------------------------------------------------
+// 🔐 Protect all trainee routes (everyone must be logged in)
+// --------------------------------------------------------
 router.use(protect);
 
-// --------------------------
-// Admin Dashboard
-// --------------------------
+// --------------------------------------------------------
+// 🧑‍💼 Admin Dashboard (Only Admin)
+// --------------------------------------------------------
 router.get('/admin', admin, traineeController.getAllTrainees);
 
-// --------------------------
-// Add Trainee (Admin Only)
-// --------------------------
-router.get('/add', admin, (req, res) => res.render('addTrainee'));
-router.post('/add', admin, traineeController.addTrainee);
+// --------------------------------------------------------
+// ➕ Add Trainee (User + Admin Both Allowed)
+// --------------------------------------------------------
+router.get('/add', (req, res) => res.render('addTrainee'));
+router.post('/add', traineeController.addTrainee);
 
-// --------------------------
-// CSV Upload (Admin Only)
-// --------------------------
+// --------------------------------------------------------
+// 📤 CSV Upload (Admin Only)
+// --------------------------------------------------------
 router.post('/upload-csv', admin, upload.single("csvFile"), traineeController.uploadCSV);
 
-// --------------------------
-// Edit / Update / Delete (Admin Only)
-// --------------------------
+// --------------------------------------------------------
+// ✏ Edit / Update / Delete (Admin Only)
+// --------------------------------------------------------
 router.get('/edit/:id', admin, traineeController.editForm);
 router.post('/update/:id', admin, traineeController.updateTrainee);
 router.post('/delete/:id', admin, traineeController.deleteTrainee);
