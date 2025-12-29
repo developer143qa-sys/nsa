@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Add Trainee</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<meta charset="UTF-8">
+<title>Add Trainee</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+  body { font-family: Arial, sans-serif; }
+</style>
 </head>
 <body>
 
-<div class="container mt-3">
-  <div class="d-flex justify-content-end">
-    <a href="/auth/logout" class="btn btn-danger">Logout</a>
-  </div>
+<div class="container mt-3 d-flex justify-content-end">
+  <a href="/auth/logout" class="btn btn-danger">Logout</a>
 </div>
 
 <div class="container mt-4">
@@ -19,8 +20,6 @@
 
   <!-- Single Trainee Form -->
   <form id="singleForm" class="mb-4">
-    <h3>Single Trainee</h3>
-
     <input type="text" name="qid" placeholder="QID" class="form-control mb-2" required>
     <input type="text" name="fullname" placeholder="Full Name" class="form-control mb-2" required>
     <input type="text" name="phoneNumber" placeholder="Phone Number" class="form-control mb-2" required>
@@ -39,30 +38,30 @@
       <option value="">Select Reason</option>
     </select>
 
-    <!-- Postponed Date (for delay) -->
-    <div class="mb-2" id="postponedDiv" style="display:none;">
-      <label for="postponedDate">Postponed Date</label>
-      <input type="date" name="postponedDate" id="postponedDate" class="form-control">
-    </div>
-
-    <!-- Batch No (completed + delay) -->
+    <!-- Batch No -->
     <div class="mb-2" id="batchNoDiv" style="display:none;">
       <label for="batchNo">Batch No</label>
       <input type="text" name="batchNo" id="batchNo" class="form-control">
     </div>
 
-    <!-- Force No (exception) -->
+    <!-- Force No -->
     <div class="mb-2" id="forceNoDiv" style="display:none;">
       <label for="forceNo">Force No</label>
       <input type="text" name="forceNo" id="forceNo" class="form-control">
     </div>
 
-    <!-- Batch Dates (exception only) -->
-    <div class="mb-2" id="batchDatesDiv" style="display:none;">
-      <label for="batchStartDate">Batch Start Date</label>
-      <input type="date" name="batchStartDate" id="batchStartDate" class="form-control">
-      <label for="batchEndDate" class="mt-2">Batch End Date</label>
-      <input type="date" name="batchEndDate" id="batchEndDate" class="form-control">
+    <!-- Batch Years -->
+    <div class="mb-2">
+      <label for="batchStartYear">Batch Start Year</label>
+      <input type="number" name="batchStartYear" id="batchStartYear" class="form-control" placeholder="e.g. 2025">
+      <label for="batchEndYear" class="mt-2">Batch End Year</label>
+      <input type="number" name="batchEndYear" id="batchEndYear" class="form-control" placeholder="e.g. 2026">
+    </div>
+
+    <!-- Active Checkbox -->
+    <div class="form-check mb-2">
+      <input type="checkbox" name="isActive" value="true" class="form-check-input" id="isActive">
+      <label class="form-check-label" for="isActive">Active</label>
     </div>
 
     <button type="submit" class="btn btn-primary mt-3">Add Trainee</button>
@@ -71,7 +70,7 @@
   <!-- CSV Upload -->
   <form id="csvForm">
     <h3>Upload CSV</h3>
-    <input type="file" name="csvFile" class="form-control mb-2" accept=".csv" required>
+    <input type="file" name="file" class="form-control mb-2" accept=".csv" required>
     <button class="btn btn-success">Upload CSV</button>
   </form>
 </div>
@@ -79,10 +78,11 @@
 <script>
 const caseTypeSelect = document.getElementById('caseType');
 const reasonSelect = document.getElementById('reason');
-const postponedDiv = document.getElementById('postponedDiv');
 const batchNoDiv = document.getElementById('batchNoDiv');
 const forceNoDiv = document.getElementById('forceNoDiv');
-const batchDatesDiv = document.getElementById('batchDatesDiv');
+const batchStartYear = document.getElementById('batchStartYear');
+const batchEndYear = document.getElementById('batchEndYear');
+const isActiveCheckbox = document.getElementById('isActive');
 
 const reasonOptions = {
   delay: [
@@ -93,66 +93,74 @@ const reasonOptions = {
     'Medical deferment',
     'Accompanying for study abroad',
     'Sole supporter of mother',
-    'Sole supporter of disabled siblings'
+    'Sole supporter of disabled siblings',
+    'Other'
   ],
-  exception: [
-    'Active duty soldier',
-    'Completed basic training'
-  ],
-  exempted: [
-    'Medically unfit'
-  ]
+  exception: ['Active duty soldier', 'Completed basic training'],
+  exempted: ['Medically unfit']
 };
 
-// Case Type Logic
-caseTypeSelect.addEventListener('change', () => {
-  const type = caseTypeSelect.value;
-
-  // Reset all dynamic fields
-  reasonSelect.style.display = 'none'; reasonSelect.innerHTML = '';
-  postponedDiv.style.display = 'none';
+// Show/hide reason, batchNo, forceNo
+function applyCaseType(type) {
+  let selectedReason = reasonSelect.value;
+  reasonSelect.style.display = 'none';
+  reasonSelect.innerHTML = '<option value="">Select Reason</option>';
   batchNoDiv.style.display = 'none';
   forceNoDiv.style.display = 'none';
-  batchDatesDiv.style.display = 'none';
 
-  // Show relevant fields
-  if (type === 'delay') {
-    postponedDiv.style.display = 'block';
-    batchNoDiv.style.display = 'block';
+  if(type === 'delay') {
     reasonSelect.style.display = 'block';
-    reasonSelect.innerHTML = '<option value="">Select Reason</option>';
-    reasonOptions['delay'].forEach(r => {
-      const option = document.createElement('option');
-      option.value = r; option.text = r;
-      reasonSelect.appendChild(option);
-    });
-  } else if (type === 'completed') {
     batchNoDiv.style.display = 'block';
-  } else if (type === 'exception') {
+    reasonOptions.delay.forEach(r => reasonSelect.innerHTML += `<option value="${r}">${r}</option>`);
+  } else if(type === 'completed') {
+    batchNoDiv.style.display = 'block';
+  } else if(type === 'exception') {
+    reasonSelect.style.display = 'block';
     forceNoDiv.style.display = 'block';
-    batchDatesDiv.style.display = 'block';
+    reasonOptions.exception.forEach(r => reasonSelect.innerHTML += `<option value="${r}">${r}</option>`);
+  } else if(type === 'exempted') {
     reasonSelect.style.display = 'block';
-    reasonSelect.innerHTML = '<option value="">Select Reason</option>';
-    reasonOptions['exception'].forEach(r => {
-      const option = document.createElement('option');
-      option.value = r; option.text = r;
-      reasonSelect.appendChild(option);
-    });
-  } else if (type === 'exempted') {
-    reasonSelect.style.display = 'block';
-    reasonSelect.innerHTML = '<option value="">Select Reason</option>';
-    reasonOptions['exempted'].forEach(r => {
-      const option = document.createElement('option');
-      option.value = r; option.text = r;
-      reasonSelect.appendChild(option);
-    });
+    reasonOptions.exempted.forEach(r => reasonSelect.innerHTML += `<option value="${r}">${r}</option>`);  
   }
-});
+
+  reasonSelect.value = selectedReason;
+  updateActiveState();
+}
+
+// Enable/disable Active checkbox and Case Type
+function updateActiveState() {
+  const start = Number(batchStartYear.value);
+  const end = Number(batchEndYear.value);
+  const currentYear = new Date().getFullYear();
+
+  if(isActiveCheckbox.checked) {
+    caseTypeSelect.disabled = true;
+    caseTypeSelect.removeAttribute('required');
+  } else {
+    const enableActive = (!caseTypeSelect.value) && (start === currentYear || end === currentYear);
+    isActiveCheckbox.disabled = !enableActive;
+
+    caseTypeSelect.disabled = false;
+    caseTypeSelect.setAttribute('required', 'required');
+  }
+}
+
+// Event listeners
+caseTypeSelect.addEventListener('change', () => { applyCaseType(caseTypeSelect.value); updateActiveState(); });
+isActiveCheckbox.addEventListener('change', updateActiveState);
+batchStartYear.addEventListener('input', updateActiveState);
+batchEndYear.addEventListener('input', updateActiveState);
 
 // Submit Single Trainee
 document.getElementById('singleForm').addEventListener('submit', async e => {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(e.target).entries());
+  data.isActive = isActiveCheckbox.checked;
+
+  if(!data.isActive && !data.caseType){
+    Swal.fire('Error', 'Case Type is required if trainee is not active', 'error');
+    return;
+  }
 
   try {
     const res = await fetch('/training/add', {
@@ -160,14 +168,16 @@ document.getElementById('singleForm').addEventListener('submit', async e => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
-    const text = await res.text();
+    const result = await res.json();
     Swal.fire({
-      title: text.includes('success') ? 'Success' : 'Error',
-      text: text,
-      icon: text.includes('success') ? 'success' : 'error'
+      title: result.success ? 'Success' : 'Error',
+      text: result.message,
+      icon: result.success ? 'success' : 'error'
     });
-    e.target.reset();
-  } catch(err) {
+    if(result.success) e.target.reset();
+    isActiveCheckbox.checked = false;
+    updateActiveState();
+  } catch {
     Swal.fire('Error', 'Server error', 'error');
   }
 });
@@ -178,17 +188,22 @@ document.getElementById('csvForm').addEventListener('submit', async e => {
   const formData = new FormData(e.target);
   try {
     const res = await fetch('/training/upload-csv', { method: 'POST', body: formData });
-    const text = await res.text();
+    const result = await res.json();
     Swal.fire({
-      title: text.includes('success') ? 'Success' : 'Error',
-      text: text,
-      icon: text.includes('success') ? 'success' : 'error'
+      title: result.success ? 'Success' : 'Error',
+      text: result.message,
+      icon: result.success ? 'success' : 'error'
     });
-    e.target.reset();
-  } catch(err) {
+    if(result.success) e.target.reset();
+  } catch {
     Swal.fire('Error', 'Server error', 'error');
   }
 });
+
+// Initialize
+applyCaseType(caseTypeSelect.value);
+updateActiveState();
 </script>
+
 </body>
 </html>

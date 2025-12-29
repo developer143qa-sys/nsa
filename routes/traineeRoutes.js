@@ -1,52 +1,49 @@
-// routes/traineeRoutes.js
-
 const express = require('express');
 const router = express.Router();
+const traineeController = require('../controllers/traineeController'); 
 const multer = require('multer');
-const fs = require('fs');
 const path = require('path');
-const traineeController = require('../controllers/traineeController');
-const { protect, admin } = require('../middleware/auth');
+const fs = require('fs');
 
-// Multer setup
+// Multer setup for file upload
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../uploads');
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-    cb(null, uploadDir);
+  destination: function (req, file, cb) {
+    const uploadPath = path.join(__dirname, '../uploads');
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath);
+    }
+    cb(null, uploadPath);
   },
-  filename: (req, file, cb) => {
+  filename: function (req, file, cb) {
     cb(null, Date.now() + '-' + file.originalname);
   }
 });
-const upload = multer({ storage });
+const upload = multer({ storage: storage });
 
-// --------------------------------------------------------
-// 🔐 Protect all trainee routes (everyone must be logged in)
-// --------------------------------------------------------
-router.use(protect);
+// ==================== Dashboard & CRUD ====================
 
-// --------------------------------------------------------
-// 🧑‍💼 Admin Dashboard (Only Admin)
-// --------------------------------------------------------
-router.get('/admin', admin, traineeController.getAllTrainees);
+// Admin dashboard
+router.get('/admin', traineeController.getAdminDashboard);
 
-// --------------------------------------------------------
-// ➕ Add Trainee (User + Admin Both Allowed)
-// --------------------------------------------------------
-router.get('/add', (req, res) => res.render('addTrainee'));
+// Add trainee
+router.get('/add', traineeController.getAddPage);
 router.post('/add', traineeController.addTrainee);
 
-// --------------------------------------------------------
-// 📤 CSV Upload (Admin Only)
-// --------------------------------------------------------
-router.post('/upload-csv', admin, upload.single("csvFile"), traineeController.uploadCSV);
+// Edit trainee
+router.get('/edit/:id', traineeController.getEditPage);
+router.post('/edit/:id', traineeController.updateTrainee);
 
-// --------------------------------------------------------
-// ✏ Edit / Update / Delete (Admin Only)
-// --------------------------------------------------------
-router.get('/edit/:id', admin, traineeController.editForm);
-router.post('/update/:id', admin, traineeController.updateTrainee);
-router.post('/delete/:id', admin, traineeController.deleteTrainee);
+// Delete trainee
+router.post('/delete/:id', traineeController.deleteTrainee);
+
+// ==================== CSV Upload ====================
+
+// Optional upload page
+router.get('/upload-csv', (req, res) => {
+  res.render('uploadCSV'); // or redirect to admin dashboard
+});
+
+// Handle CSV upload
+router.post('/upload-csv', upload.single('file'), traineeController.uploadCSV);
 
 module.exports = router;

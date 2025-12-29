@@ -8,22 +8,23 @@ const traineeRecordSchema = new mongoose.Schema({
   caseType: {
     type: String,
     enum: ['completed', 'delay', 'exception', 'exempted'],
-    required: true
+    required: function() {
+      // CaseType required only if trainee is not active
+      return !this.isActive;
+    }
   },
 
-  // Dynamic fields
-  reason: { type: String },         // delay, exception, exempted only
+  // Common optional fields
+  reason: { type: String },
+  batchNo: { type: String },         // completed + delay only
+  forceNo: { type: String },         // exception only
 
-  postponedDate: { type: Date },    // delay only
+  // Years for batch
+  batchStartYear: { type: Number },  // delay + exception only
+  batchEndYear: { type: Number },    // delay + exception only
 
-  batchNo: { type: String },        // completed + delay only
-
-  forceNo: { type: String },        // exception only
-
-  batchStartDate: { type: Date },   // exception only
-  batchEndDate: { type: Date },     // exception only
-
-  currentDate: { type: Date, default: Date.now },
+  // Active flag
+  isActive: { type: Boolean, default: false },
 
   createdAt: { type: Date, default: Date.now }
 });

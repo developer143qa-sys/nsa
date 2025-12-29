@@ -1,227 +1,300 @@
 const TraineeRecord = require('../models/TraineeRecord');
-const csv = require('csv-parser');
+const csv = require('csvtojson');
 const fs = require('fs');
 
-// ===============================
-// Helper: Parse date safely
-// ===============================
-const parseDate = (val) => {
-  if (!val) return undefined;
-  const trimmed = String(val).trim();
-  return trimmed ? new Date(trimmed) : undefined;
-};
+/* ===============================
+   Helper: Calculate Status
+================================ */
+const calculateStatus = (trainee) => {
+  const currentDate = new Date();
 
-// ===============================
-// Add Single Trainee
-// ===============================
-exports.addTrainee = async (req, res) => {
-  try {
-    const {
-      qid,
-      fullname,
-      phoneNumber,
-      caseType,
-      reason,
-      postponedDate,
-      batchStartDate,
-      batchEndDate,
-      batchNo,
-      forceNo,
-      currentDate
-    } = req.body;
+  if (trainee.caseType === 'completed') return 'Completed';
+  if (trainee.caseType === 'exception') return 'Exception';
+  if (trainee.caseType === 'exempted') return 'Exempted';
 
-    const newRecord = new TraineeRecord({
-      qid,
-      fullname,
-      phoneNumber,
-      caseType,
-      reason: ['delay', 'exception', 'exempted'].includes(caseType) ? reason?.trim() : undefined,
-      postponedDate: caseType === 'delay' ? parseDate(postponedDate) : undefined,
-      batchNo: ['completed', 'delay'].includes(caseType) ? batchNo : undefined,
-      forceNo: caseType === 'exception' ? forceNo : undefined,
-      batchStartDate: caseType === 'exception' ? parseDate(batchStartDate) : undefined,
-      batchEndDate: caseType === 'exception' ? parseDate(batchEndDate) : undefined,
-      currentDate: parseDate(currentDate) || new Date()
-    });
+  if (trainee.caseType === 'delay') {
+    const startYear = Number(trainee.batchStartYear);
+    const endYear = Number(trainee.batchEndYear);
 
-    await newRecord.save();
-    res.send('success');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error: ' + err.message);
+    if (!isNaN(startYear) && !isNaN(endYear)) {
+      const batchStartDate = new Date(startYear, 0, 1);
+      const pendingDate = new Date(endYear, 4, 1); // May 1
+
+      if (currentDate < batchStartDate) return 'Delay';
+      else if (currentDate < pendingDate) return 'Delay';
+      else return 'Pending';
+    }
+
+    return 'Delay';
   }
+
+  return '';
 };
 
-// ===============================
-// Upload CSV
-// ===============================
-exports.uploadCSV = async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).send('No CSV file uploaded');
+/* ===============================
+   Helper: Determine Active
+================================ */
+const determineActive = (trainee) => {
+  const currentYear = new Date().getFullYear();
+  const startYear = Number(trainee.batchStartYear);
+  const endYear = Number(trainee.batchEndYear);
 
-    const results = [];
-    const filePath = req.file.path;
+  // CaseType selected → cannot be active
+  if (trainee.caseType) return false;
 
-    fs.createReadStream(filePath)
-      .pipe(csv())
-      .on('data', data => results.push(data))
-      .on('end', async () => {
-        for (const row of results) {
-          try {
-            const newRecord = new TraineeRecord({
-              qid: row.qid,
-              fullname: row.fullname,
-              phoneNumber: row.phoneNumber,
-              caseType: row.caseType,
-              reason: ['delay', 'exception', 'exempted'].includes(row.caseType)
-                ? row.reason?.trim()
-                : undefined,
-              postponedDate: row.caseType === 'delay' ? parseDate(row.postponedDate) : undefined,
-              batchNo: ['completed', 'delay'].includes(row.caseType) ? row.batchNo : undefined,
-              forceNo: row.caseType === 'exception' ? row.forceNo : undefined,
-              batchStartDate: row.caseType === 'exception' ? parseDate(row.batchStartDate) : undefined,
-              batchEndDate: row.caseType === 'exception' ? parseDate(row.batchEndDate) : undefined,
-              currentDate: parseDate(row.currentDate) || new Date()
-            });
-
-            await newRecord.save();
-          } catch (err) {
-            console.error(`❌ CSV Row Failed: ${err.message}`);
-          }
-        }
-
-        fs.unlinkSync(filePath);
-        res.send('success');
-      });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error: ' + err.message);
+  // Active only if current year matches batch
+  if (startYear === currentYear || endYear === currentYear) {
+    return trainee.isActive === true;
   }
+
+  return false;
 };
 
-// ===============================
-// Get All Trainees (Admin Dashboard)
-// ===============================
-exports.getAllTrainees = async (req, res) => {
+/* ===============================
+   Admin Dashboard
+================================ */
+const getAdminDashboard = async (req, res) => {
   try {
-    const { search, from, to, page } = req.query;
-    const query = {};
+    const { search, session } = req.query;
+    let query = {};
 
     if (search) {
+      const regex = new RegExp(search, 'i');
       query.$or = [
-        { qid: { $regex: search, $options: "i" } },
-        { fullname: { $regex: search, $options: "i" } },
-        { caseType: { $regex: search, $options: "i" } }
+        { qid: regex },
+        { fullname: regex },
+        { phoneNumber: regex },
+        { caseType: regex }
       ];
     }
 
-    if (from && to) {
-      query.batchStartDate = {
-        $gte: new Date(from),
-        $lte: new Date(to)
-      };
+    if (session) {
+      const years = session.match(/\d{4}/g);
+      if (years && years.length === 2) {
+        const start = parseInt(years[0]);
+        const end = parseInt(years[1]);
+
+        query.$or = [
+          { batchStartYear: { $lte: end }, batchEndYear: { $gte: start } },
+          { batchStartYear: { $lte: end }, batchEndYear: { $exists: false } }
+        ];
+      }
     }
 
-    const currentPage = parseInt(page) || 1;
-    const limit = 100;
-    const skip = (currentPage - 1) * limit;
+    const trainees = await TraineeRecord.find(query).lean();
 
-    const totalRecords = await TraineeRecord.countDocuments(query);
-    const totalPages = Math.ceil(totalRecords / limit);
+    let completedCount = 0;
+    let delayCount = 0;
+    let pendingCount = 0;
+    let exceptionCount = 0;
+    let exemptedCount = 0;
+    let activeCount = 0;
 
-    const trainees = await TraineeRecord.find(query)
-      .sort({ batchStartDate: 1 })
-      .skip(skip)
-      .limit(limit);
+    trainees.forEach(t => {
+      t.status = calculateStatus(t);
+      t.isActive = determineActive(t);
 
-    // -------------------------
-    // Count for each caseType
-    // -------------------------
-    const completedCount = await TraineeRecord.countDocuments({ caseType: 'completed' });
-    const delayCount = await TraineeRecord.countDocuments({ caseType: 'delay' });
-    const exceptionCount = await TraineeRecord.countDocuments({ caseType: 'exception' });
-    const exemptedCount = await TraineeRecord.countDocuments({ caseType: 'exempted' });
+      if (t.isActive) activeCount++;
 
-    res.render("admin", {
+      if (t.status === 'Completed') completedCount++;
+      else if (t.status === 'Delay') delayCount++;
+      else if (t.status === 'Pending') pendingCount++;
+      else if (t.status === 'Exception') exceptionCount++;
+      else if (t.status === 'Exempted') exemptedCount++;
+    });
+
+    res.render('admin', {
       trainees,
-      search,
-      from,
-      to,
-      page: currentPage,
-      totalPages,
-      totalTrainees: totalRecords,
       completedCount,
       delayCount,
+      pendingCount,
       exceptionCount,
-      exemptedCount
+      exemptedCount,
+      activeCount,
+      totalTrainees: trainees.length,
+      search: search || '',
+      session: session || ''
     });
+
   } catch (err) {
     console.error(err);
-    res.status(500).send("Server Error");
+    res.status(500).send('Server Error');
   }
 };
 
-// ===============================
-// Edit Trainee Form
-// ===============================
-exports.editForm = async (req, res) => {
-  try {
-    const trainee = await TraineeRecord.findById(req.params.id);
-    if (!trainee) return res.status(404).send("Trainee not found");
-    res.render("editTrainee", { trainee });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Server Error");
-  }
-};
+/* ===============================
+   Add Trainee
+================================ */
+const getAddPage = (req, res) => res.render('addTrainee');
 
-// ===============================
-// Update Trainee
-// ===============================
-exports.updateTrainee = async (req, res) => {
+const addTrainee = async (req, res) => {
   try {
     const {
+      qid,
       fullname,
       phoneNumber,
       caseType,
       reason,
-      postponedDate,
-      batchStartDate,
-      batchEndDate,
       batchNo,
       forceNo,
-      currentDate
+      batchStartYear,
+      batchEndYear,
+      isActive
     } = req.body;
 
-    await TraineeRecord.findByIdAndUpdate(req.params.id, {
+    if (!qid || !fullname || !phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Required fields missing'
+      });
+    }
+
+    const trainee = {
+      qid,
       fullname,
       phoneNumber,
-      caseType,
-      reason: ['delay', 'exception', 'exempted'].includes(caseType) ? reason?.trim() : undefined,
-      postponedDate: caseType === "delay" ? parseDate(postponedDate) : undefined,
-      batchNo: ['completed', 'delay'].includes(caseType) ? batchNo : undefined,
-      forceNo: caseType === "exception" ? forceNo : undefined,
-      batchStartDate: caseType === "exception" ? parseDate(batchStartDate) : undefined,
-      batchEndDate: caseType === "exception" ? parseDate(batchEndDate) : undefined,
-      currentDate: parseDate(currentDate)
+      reason,
+      batchNo,
+      forceNo,
+      batchStartYear,
+      batchEndYear,
+      isActive: isActive === 'true' || isActive === true
+    };
+
+    // Only assign caseType if not active
+    if (!trainee.isActive) trainee.caseType = caseType;
+    trainee.isActive = determineActive(trainee);
+
+    await TraineeRecord.create(trainee);
+
+    res.json({
+      success: true,
+      message: 'Trainee added successfully'
     });
 
-    res.redirect("/training/admin");
   } catch (err) {
     console.error(err);
-    res.status(500).send("Server Error");
+    res.status(500).json({
+      success: false,
+      message: 'Server Error'
+    });
   }
 };
 
-// ===============================
-// Delete Trainee
-// ===============================
-exports.deleteTrainee = async (req, res) => {
+/* ===============================
+   Edit / Update
+================================ */
+const getEditPage = async (req, res) => {
   try {
-    await TraineeRecord.findByIdAndDelete(req.params.id);
-    res.redirect("/training/admin");
+    const trainee = await TraineeRecord.findById(req.params.id).lean();
+    if (!trainee) return res.status(404).send('Not found');
+    res.render('editTrainee', { trainee });
   } catch (err) {
     console.error(err);
-    res.status(500).send("Server Error");
+    res.status(500).send('Server Error');
   }
+};
+
+const updateTrainee = async (req, res) => {
+  try {
+    const traineeId = req.params.id;
+
+    const trainee = {
+      ...req.body,
+      isActive: req.body.isActive === 'true' || req.body.isActive === true
+    };
+
+    if (!trainee.isActive) trainee.caseType = req.body.caseType;
+    trainee.isActive = determineActive(trainee);
+
+    await TraineeRecord.findByIdAndUpdate(traineeId, trainee);
+    res.redirect('/training/admin');
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+};
+
+/* ===============================
+   Delete
+================================ */
+const deleteTrainee = async (req, res) => {
+  try {
+    await TraineeRecord.findByIdAndDelete(req.params.id);
+    res.redirect('/training/admin');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+};
+
+/* ===============================
+   CSV Upload
+================================ */
+const uploadCSV = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).send('No file uploaded');
+
+    const jsonArray = await csv().fromFile(req.file.path);
+
+    let added = 0;
+    let updated = 0;
+
+    for (const item of jsonArray) {
+      if (!item.qid) continue;
+
+      const trainee = {
+        qid: item.qid.trim(),
+        fullname: item.fullname?.trim(),
+        phoneNumber: item.phoneNumber?.trim(),
+        reason: item.reason?.trim() || '',
+        batchNo: item.batchNo?.trim() || '',
+        forceNo: item.forceNo?.trim() || '',
+        batchStartYear: item.batchStartYear?.trim(),
+        batchEndYear: item.batchEndYear?.trim(),
+        isActive: item.isActive === 'true'
+      };
+
+      if (!trainee.isActive) trainee.caseType = item.caseType?.trim();
+      trainee.isActive = determineActive(trainee);
+
+      const exists = await TraineeRecord.findOne({ qid: trainee.qid });
+
+      if (exists) {
+        await TraineeRecord.updateOne({ qid: trainee.qid }, trainee);
+        updated++;
+      } else {
+        await TraineeRecord.create(trainee);
+        added++;
+      }
+    }
+
+    fs.unlinkSync(req.file.path);
+
+    res.json({
+      success: true,
+      message: `Added: ${added}, Updated: ${updated}`
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: 'Server Error'
+    });
+  }
+};
+
+/* ===============================
+   Exports
+================================ */
+module.exports = {
+  getAdminDashboard,
+  getAddPage,
+  addTrainee,
+  getEditPage,
+  updateTrainee,
+  deleteTrainee,
+  uploadCSV
 };

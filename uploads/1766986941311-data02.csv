@@ -1,0 +1,9 @@
+qid,fullname,phoneNumber,reason,batchNo,forceNo,batchStartYear,batchEndYear,isActive,caseType
+901,John Doe,5551234567,,B1,F123,2022,2023,true,
+902,Jane Smith,5559876543,,B2,F124,2021,2022,false,completed
+903,Bob Johnson,5556781234,,B1,F125,2020,2021,false,exception
+904,Alice Brown,5553456789,,B3,F126,2023,2024,true,
+905,Charlie Lee,5554567890,,B2,F127,2021,2022,false,exempted
+906,Eve Davis,5555678901,,B3,F128,2022,2023,true,
+907,Frank Moore,5556789012,,B1,F129,2023,2024,false,delay
+908,Grace Hall,5557890123,,B2,F130,2020,2021,true

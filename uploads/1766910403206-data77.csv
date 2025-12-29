@@ -1,0 +1,6 @@
+qid,fullname,phoneNumber,caseType,reason,batchNo,forceNo,batchStartYear,batchEndYear,isActive
+40001,John Doe,555-1234,completed,,B101,,2025,2026,false
+40002,Jane Smith,555-5678,delay,Completing studies,B102,,2024,2025,false
+40003,Ahmed Khan,555-9012,exception,Active duty soldier,,F201,2023,2024,false
+40004,Lina Ali,555-3456,exempted,Medically unfit,,,,false
+40005,Sam Wilson,555-7890,,,"",,"",true

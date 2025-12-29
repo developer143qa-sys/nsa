@@ -1,0 +1,22 @@
+QID,Full Name,Phone,CaseType,Reason,BatchNo,BatchStartYear,BatchEndYear
+2001,Ali Khan,03009998877,Completed,,,
+2002,Sara Ahmed,555-9876,Delay,Completing studies,Batch-01,2024,2025
+2003,Usman Riaz,03001112233,Exception,Active duty soldier,,,
+2004,Ayesha Tariq,03005556677,Exempted,Medically unfit,,,
+2005,Hina Iqbal,555-443322,Completed,,,
+2006,Omar Farooq,555-778899,Delay,Only child of mother,Batch-02,2025,2026
+2007,Zara Khan,555-665544,Pending,Medical deferment,Batch-03,2023,2024
+2008,Fahad Qureshi,555-112233,Completed,,,
+2009,Maria Khan,555-224466,Exempted,Medically unfit,,,
+2010,Siraj,555-998877,Exception,Completed basic training,,,
+2011,Ahmed Raza,555-334455,Delay,Accompanying for study abroad,Batch-04,2025,2026
+2012,Usman Malik,555-556677,Completed,,,
+2013,Ali Hassan,555-667788,Pending,Only child of father,Batch-05,2024,2025
+2014,Ammaar,555-778899,Pending,Sole supporter of mother,Batch-06,2021,2022
+2015,Yousef Ali,555-889900,Exempted,Medically unfit,,,
+2016,Tariq,555-112244,Delay,Completing studies,Batch-07,2025,2026
+2017,Bit,555-223355,Pending,Medical deferment,Batch-08,2024,2025
+2018,Sixtyone,555-334466,Pending,Only child of mother,Batch-09,2024,2025
+2019,Sixtytwo,555-445577,Delay,Completing studies,Batch-10,2025,2026
+2020,Seventy,555-556688,Delay,Medical deferment,Batch-11,2026,2027
+2021,Tihatar,555-667799,Pending,Sole supporter of mother,Batch-12,2019,2020
