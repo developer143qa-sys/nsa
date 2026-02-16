@@ -1,53 +1,60 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= locale %>" dir="<%= locale === 'ar' ? 'rtl' : 'ltr' %>">
 <head>
   <meta charset="UTF-8">
-  <title>Register</title>
+  <title><%= __('register') %></title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <style>
+    body[dir="rtl"] {
+      text-align: right;
+    }
+    a.lang-switch {
+      text-decoration: none;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body class="d-flex justify-content-center align-items-center vh-100">
   <div class="card p-4" style="width: 400px;">
-    <h3 class="mb-3 text-center">Register</h3>
+    <h3 class="mb-3 text-center"><%= __('register') %></h3>
 
-    <!-- Error display -->
     <% if (error) { %>
       <div class="alert alert-danger"><%= error %></div>
     <% } %>
 
     <form action="/auth/register" method="POST">
-      <!-- Username -->
+      <!-- Full Name -->
       <div class="mb-3">
-        <label for="username" class="form-label">Full Name</label>
+        <label for="username" class="form-label"><%= __('fullName') %></label>
         <input type="text" name="username" class="form-control" required>
       </div>
 
       <!-- Email -->
       <div class="mb-3">
-        <label for="email" class="form-label">Email</label>
+        <label for="email" class="form-label"><%= __('email') %></label>
         <input type="email" name="email" class="form-control" required>
       </div>
 
       <!-- Password -->
       <div class="mb-3">
-        <label for="password" class="form-label">Password</label>
+        <label for="password" class="form-label"><%= __('password') %></label>
         <input type="password" name="password" class="form-control" required>
       </div>
 
-      <!-- Role -->
-      <!-- <div class="mb-3">
-        <label for="role" class="form-label">Role</label>
-        <select name="role" class="form-control">
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div> -->
-
-      <button class="btn btn-success w-100">Register</button>
+      <button class="btn btn-success w-100"><%= __('register') %></button>
     </form>
 
     <p class="mt-3 text-center">
-      Already have an account? <a href="/auth/login">Login</a>
+      <%= __('alreadyAccount') %> <a href="/auth/login"><%= __('login') %></a>
     </p>
+
+    <hr>
+
+    <!-- Language Switch -->
+    <div class="text-center">
+      <a href="/lang/en?redirect=<%= encodeURIComponent(currentUrl) %>" class="lang-switch">English</a> |
+      <a href="/lang/ar?redirect=<%= encodeURIComponent(currentUrl) %>" class="lang-switch">العربية</a>
+    </div>
   </div>
 </body>
 </html>

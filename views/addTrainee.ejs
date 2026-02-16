@@ -1,78 +1,84 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= locale %>" dir="<%= locale === 'ar' ? 'rtl' : 'ltr' %>">
 <head>
 <meta charset="UTF-8">
-<title>Add Trainee</title>
+<title><%= __('addTrainee') %></title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
   body { font-family: Arial, sans-serif; }
+  body[dir="rtl"] { text-align: right; }
 </style>
 </head>
 <body>
 
 <div class="container mt-3 d-flex justify-content-end">
-  <a href="/auth/logout" class="btn btn-danger">Logout</a>
+  <a href="/auth/logout" class="btn btn-danger"><%= __('logout') %></a>
 </div>
 
 <div class="container mt-4">
-  <h1>Add Trainee</h1>
+  <h1><%= __('addTrainee') %></h1>
 
   <!-- Single Trainee Form -->
   <form id="singleForm" class="mb-4">
-    <input type="text" name="qid" placeholder="QID" class="form-control mb-2" required>
-    <input type="text" name="fullname" placeholder="Full Name" class="form-control mb-2" required>
-    <input type="text" name="phoneNumber" placeholder="Phone Number" class="form-control mb-2" required>
+    <input type="text" name="qid" placeholder="<%= __('qid') %>" class="form-control mb-2" required>
+    <input type="text" name="fullname" placeholder="<%= __('fullName') %>" class="form-control mb-2" required>
+    <input type="text" name="phoneNumber" placeholder="<%= __('phoneNumber') %>" class="form-control mb-2" required>
 
     <!-- Case Type -->
     <select name="caseType" id="caseType" class="form-control mb-2" required>
-      <option value="">Select Case Type</option>
-      <option value="completed">Completed</option>
-      <option value="delay">Delay</option>
-      <option value="exception">Exception</option>
-      <option value="exempted">Exempted</option>
+      <option value=""><%= __('selectCaseType') %></option>
+      <option value="completed"><%= __('completed') %></option>
+      <option value="delay"><%= __('delay') %></option>
+      <option value="exception"><%= __('exception') %></option>
+      <option value="exempted"><%= __('exempted') %></option>
     </select>
 
     <!-- Reason -->
     <select name="reason" id="reason" class="form-control mb-2" style="display:none;">
-      <option value="">Select Reason</option>
+      <option value=""><%= __('selectReason') %></option>
     </select>
 
     <!-- Batch No -->
     <div class="mb-2" id="batchNoDiv" style="display:none;">
-      <label for="batchNo">Batch No</label>
+      <label for="batchNo"><%= __('batchNo') %></label>
       <input type="text" name="batchNo" id="batchNo" class="form-control">
     </div>
 
     <!-- Force No -->
     <div class="mb-2" id="forceNoDiv" style="display:none;">
-      <label for="forceNo">Force No</label>
+      <label for="forceNo"><%= __('forceNo') %></label>
       <input type="text" name="forceNo" id="forceNo" class="form-control">
     </div>
 
     <!-- Batch Years -->
     <div class="mb-2">
-      <label for="batchStartYear">Batch Start Year</label>
+      <label for="batchStartYear"><%= __('batchStartYear') %></label>
       <input type="number" name="batchStartYear" id="batchStartYear" class="form-control" placeholder="e.g. 2025">
-      <label for="batchEndYear" class="mt-2">Batch End Year</label>
+      <label for="batchEndYear" class="mt-2"><%= __('batchEndYear') %></label>
       <input type="number" name="batchEndYear" id="batchEndYear" class="form-control" placeholder="e.g. 2026">
     </div>
 
     <!-- Active Checkbox -->
     <div class="form-check mb-2">
       <input type="checkbox" name="isActive" value="true" class="form-check-input" id="isActive">
-      <label class="form-check-label" for="isActive">Active</label>
+      <label class="form-check-label" for="isActive"><%= __('active') %></label>
     </div>
 
-    <button type="submit" class="btn btn-primary mt-3">Add Trainee</button>
+    <button type="submit" class="btn btn-primary mt-3"><%= __('addTrainee') %></button>
   </form>
 
   <!-- CSV Upload -->
   <form id="csvForm">
-    <h3>Upload CSV</h3>
+    <h3><%= __('uploadCSV') %></h3>
     <input type="file" name="file" class="form-control mb-2" accept=".csv" required>
-    <button class="btn btn-success">Upload CSV</button>
+    <button class="btn btn-success"><%= __('upload') %></button>
   </form>
+
+  <!-- Language Switch -->
+  <div class="text-center mt-3">
+    <a href="/lang/en">English</a> | <a href="/lang/ar">العربية</a>
+  </div>
 </div>
 
 <script>
@@ -86,25 +92,25 @@ const isActiveCheckbox = document.getElementById('isActive');
 
 const reasonOptions = {
   delay: [
-    'Considered as the only son',
-    'Completing studies',
-    'Only child of mother',
-    'Only child of father',
-    'Medical deferment',
-    'Accompanying for study abroad',
-    'Sole supporter of mother',
-    'Sole supporter of disabled siblings',
-    'Other'
+    '<%= __("consideredOnlySon") %>',
+    '<%= __("completingStudies") %>',
+    '<%= __("onlyChildMother") %>',
+    '<%= __("onlyChildFather") %>',
+    '<%= __("medicalDeferment") %>',
+    '<%= __("studyAbroad") %>',
+    '<%= __("soleSupportMother") %>',
+    '<%= __("soleSupportDisabledSiblings") %>',
+    '<%= __("other") %>'
   ],
-  exception: ['Active duty soldier', 'Completed basic training'],
-  exempted: ['Medically unfit']
+  exception: ['<%= __("activeDuty") %>', '<%= __("completedBasic") %>'],
+  exempted: ['<%= __("medicallyUnfit") %>']
 };
 
 // Show/hide reason, batchNo, forceNo
 function applyCaseType(type) {
   let selectedReason = reasonSelect.value;
   reasonSelect.style.display = 'none';
-  reasonSelect.innerHTML = '<option value="">Select Reason</option>';
+  reasonSelect.innerHTML = `<option value="">${'<%= __("selectReason") %>'}</option>`;
   batchNoDiv.style.display = 'none';
   forceNoDiv.style.display = 'none';
 
@@ -158,7 +164,7 @@ document.getElementById('singleForm').addEventListener('submit', async e => {
   data.isActive = isActiveCheckbox.checked;
 
   if(!data.isActive && !data.caseType){
-    Swal.fire('Error', 'Case Type is required if trainee is not active', 'error');
+    Swal.fire('<%= __("error") %>', '<%= __("caseTypeRequired") %>', 'error');
     return;
   }
 
@@ -170,7 +176,7 @@ document.getElementById('singleForm').addEventListener('submit', async e => {
     });
     const result = await res.json();
     Swal.fire({
-      title: result.success ? 'Success' : 'Error',
+      title: result.success ? '<%= __("success") %>' : '<%= __("error") %>',
       text: result.message,
       icon: result.success ? 'success' : 'error'
     });
@@ -178,7 +184,7 @@ document.getElementById('singleForm').addEventListener('submit', async e => {
     isActiveCheckbox.checked = false;
     updateActiveState();
   } catch {
-    Swal.fire('Error', 'Server error', 'error');
+    Swal.fire('<%= __("error") %>', '<%= __("serverError") %>', 'error');
   }
 });
 
@@ -190,13 +196,13 @@ document.getElementById('csvForm').addEventListener('submit', async e => {
     const res = await fetch('/training/upload-csv', { method: 'POST', body: formData });
     const result = await res.json();
     Swal.fire({
-      title: result.success ? 'Success' : 'Error',
+      title: result.success ? '<%= __("success") %>' : '<%= __("error") %>',
       text: result.message,
       icon: result.success ? 'success' : 'error'
     });
     if(result.success) e.target.reset();
   } catch {
-    Swal.fire('Error', 'Server error', 'error');
+    Swal.fire('<%= __("error") %>', '<%= __("serverError") %>', 'error');
   }
 });
 

@@ -1,84 +1,93 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Dashboard</title>
+  <title>Admin Dashboard / لوحة التحكم</title>
+
+  <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+
+  <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <style>
-    body { font-family: Arial, sans-serif; }
-    .sidebar { width: 250px; min-height: 100vh; background-color: #1f2937; color: white; }
+    /* General Body */
+    body { font-family: Arial, sans-serif; margin:0; padding:0; }
+
+    /* Sidebar */
+    .sidebar { width: 250px; min-height: 100vh; background-color: #1f2937; color: white; padding-top: 20px; }
     .sidebar a { color: white; text-decoration: none; }
     .sidebar a:hover { background-color: #374151; }
+
+    /* Cards */
     .card { box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 10px; text-align: center; }
     .card-title { font-weight: bold; }
+
+    /* RTL support */
+    body.rtl { direction: rtl; text-align: right; }
+
+    /* Print Styles */
     @media print {
-  /* Hide everything by default */
-  body * {
-    visibility: hidden;
-  }
-
-  /* Show only the table and its contents */
-  #traineeTable, #traineeTable * {
-    visibility: visible;
-  }
-
-  /* Position the table at the top-left for print */
-  #traineeTable {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-  }
-
-  /* Optional: remove table borders collapse issues */
-  #traineeTable th, #traineeTable td {
-    border: 1px solid #000 !important;
-    padding: 5px;
-  }
-}
-
-      body::after {
-        content: "http://localhost";
-        display: block;
-        text-align: left;
-        font-size: 12px;
-        margin-bottom: 10px;
-      }
+      body * { visibility: hidden; }
+      #traineeTable, #traineeTable * { visibility: visible; }
+      #traineeTable { position: absolute; top: 0; left: 0; width: 100%; }
+      #traineeTable th, #traineeTable td { border: 1px solid #000 !important; padding: 5px; }
+      .no-print { display: none !important; }
     }
+
+    /* Footer for print */
+    body::after {
+      content: "http://localhost";
+      display: block;
+      text-align: left;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
   </style>
 </head>
-<body>
+<body class="<%= locale === 'ar' ? 'rtl' : '' %>">
+
 <div class="dashboard-container d-flex">
 
   <!-- Sidebar -->
-  <div class="sidebar p-3 no-print">
-    <h3>Admin Panel</h3>
+  <div class="sidebar no-print">
+    <h3 class="text-center">Admin Panel / لوحة التحكم</h3>
     <nav class="mt-4">
       <ul class="nav flex-column">
         <li class="nav-item mb-2">
-          <a class="nav-link btn btn-outline-light w-100 mb-2" href="/training/admin">Dashboard</a>
+          <a class="nav-link btn btn-outline-light w-100 mb-2" href="/training/admin">Dashboard / لوحة المعلومات</a>
         </li>
         <li class="nav-item mb-2">
-          <a class="nav-link btn btn-outline-light w-100" href="/training/add">Add Trainee</a>
+          <a class="nav-link btn btn-outline-light w-100" href="/training/add">Add Trainee / إضافة متدرب</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link btn btn-danger w-100" href="/auth/logout">Logout</a>
+          <a class="nav-link btn btn-danger w-100" href="/auth/logout">Logout / تسجيل الخروج</a>
         </li>
       </ul>
     </nav>
+
+    <div class="mt-4">
+      <a href="/lang/en" class="btn btn-light btn-sm w-100 mb-1">English</a>
+      <a href="/lang/ar" class="btn btn-light btn-sm w-100">العربية</a>
+    </div>
+
   </div>
+  <!-- End Sidebar -->
 
   <!-- Main Content -->
   <div class="main-content flex-grow-1 p-4">
-    <h1>Trainee Dashboard</h1>
 
-    <!-- Cards -->
+    <!-- Page Title -->
+    <h1 class="mb-4">Trainee Dashboard / لوحة المتدربين</h1>
+
+    <!-- Cards Row -->
     <div class="row mb-4">
+
       <div class="col-md-2">
         <div class="card text-white bg-success mb-3">
           <div class="card-body">
-            <h5 class="card-title">Completed</h5>
+            <h5 class="card-title">Completed / مكتمل</h5>
             <p class="card-text fs-3"><%= completedCount %></p>
           </div>
         </div>
@@ -87,7 +96,7 @@
       <div class="col-md-2">
         <div class="card text-white bg-warning mb-3">
           <div class="card-body">
-            <h5 class="card-title">Pending</h5>
+            <h5 class="card-title">Pending / قيد الانتظار</h5>
             <p class="card-text fs-3"><%= pendingCount %></p>
           </div>
         </div>
@@ -96,7 +105,7 @@
       <div class="col-md-2">
         <div class="card text-white bg-danger mb-3">
           <div class="card-body">
-            <h5 class="card-title">Exception</h5>
+            <h5 class="card-title">Exception / استثناء</h5>
             <p class="card-text fs-3"><%= exceptionCount %></p>
           </div>
         </div>
@@ -105,7 +114,7 @@
       <div class="col-md-2">
         <div class="card text-white bg-info mb-3">
           <div class="card-body">
-            <h5 class="card-title">Exempted</h5>
+            <h5 class="card-title">Exempted / معفى</h5>
             <p class="card-text fs-3"><%= exemptedCount %></p>
           </div>
         </div>
@@ -114,7 +123,7 @@
       <div class="col-md-2">
         <div class="card text-white bg-primary mb-3">
           <div class="card-body">
-            <h5 class="card-title">Active</h5>
+            <h5 class="card-title">Active / نشط</h5>
             <p class="card-text fs-3"><%= activeCount %></p>
           </div>
         </div>
@@ -123,64 +132,77 @@
       <div class="col-md-2">
         <div class="card text-white bg-dark mb-3">
           <div class="card-body">
-            <h5 class="card-title">Total</h5>
+            <h5 class="card-title">Total / الإجمالي</h5>
             <p class="card-text fs-3"><%= totalTrainees %></p>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Filter -->
+    </div>
+    <!-- End Cards Row -->
+
+    <!-- Filter Form -->
     <form class="row g-3 align-items-end mb-3 no-print" method="GET" action="/training/admin">
+
       <div class="col-md-4">
-        <label class="form-label">Search</label>
+        <label class="form-label">Search / البحث</label>
         <input type="text" name="search" class="form-control" value="<%= search %>">
       </div>
 
       <div class="col-md-4">
-        <label class="form-label">Session (Year Range)</label>
+        <label class="form-label">Session (Year Range) / الفترة (سنة البداية – سنة النهاية)</label>
         <input type="text" name="session" class="form-control" placeholder="2019 to 2020" value="<%= session %>">
       </div>
 
       <div class="col-md-2">
-        <button class="btn btn-primary w-100">Filter</button>
+        <button class="btn btn-primary w-100">Filter / تصفية</button>
       </div>
 
       <div class="col-md-2">
-        <button type="button" onclick="window.print()" class="btn btn-secondary w-100">Print</button>
+        <button type="button" onclick="window.print()" class="btn btn-secondary w-100">Print / طباعة</button>
       </div>
+
     </form>
+    <!-- End Filter Form -->
 
     <!-- CSV Upload -->
     <div class="mb-4 no-print">
       <form id="csvForm" enctype="multipart/form-data">
         <div class="row g-3 align-items-center">
+
           <div class="col-md-6">
             <input type="file" name="file" accept=".csv" class="form-control" required>
           </div>
+
           <div class="col-md-2">
-            <button type="submit" class="btn btn-success w-100">Upload CSV</button>
+            <button type="submit" class="btn btn-success w-100">Upload CSV / رفع CSV</button>
           </div>
+
         </div>
       </form>
     </div>
+    <!-- End CSV Upload -->
 
-    <!-- Table -->
+    <!-- Export Excel -->
+    <button id="exportBtn" class="btn btn-info mb-3 no-print">Export Excel / تصدير Excel</button>
+
+    <!-- Trainee Table -->
     <div class="table-section">
       <table class="table table-bordered table-striped" id="traineeTable">
         <thead class="table-dark">
           <tr>
             <th>QID</th>
-            <th>Full Name</th>
-            <th>Phone</th>
-            <th>Status</th>
-            <th>Active</th>
-            <th>Batch No</th>
-            <th>Batch Start</th>
-            <th>Batch End</th>
-            <th class="no-print">Actions</th>
+            <th>Full Name / الاسم الكامل</th>
+            <th>Phone / رقم الهاتف</th>
+            <th>Status / الحالة</th>
+            <th>Active / نشط</th>
+            <th>Batch No / رقم الدفعة</th>
+            <th>Batch Start / سنة البداية</th>
+            <th>Batch End / سنة النهاية</th>
+            <th class="no-print">Actions / الإجراءات</th>
           </tr>
         </thead>
+
         <tbody>
           <% if (trainees.length) { %>
             <% trainees.forEach(t => { %>
@@ -191,63 +213,62 @@
                 <td><%= t.status %></td>
                 <td>
                   <% if (t.isActive) { %>
-                    <span class="badge bg-success">Yes</span>
+                    <span class="badge bg-success">Yes / نعم</span>
                   <% } else { %>
-                    <span class="badge bg-secondary">No</span>
+                    <span class="badge bg-secondary">No / لا</span>
                   <% } %>
                 </td>
                 <td><%= t.batchNo || '' %></td>
                 <td><%= t.batchStartYear || '' %></td>
                 <td><%= t.batchEndYear || '' %></td>
                 <td class="no-print">
-                  <a href="/training/edit/<%= t._id %>" class="btn btn-warning btn-sm">Edit</a>
-                  <form action="/training/delete/<%= t._id %>" method="POST" style="display:inline;"
-                        onsubmit="return confirm('Delete this trainee?');">
-                    <button class="btn btn-danger btn-sm">Delete</button>
+                  <a href="/training/edit/<%= t._id %>" class="btn btn-warning btn-sm">Edit / تعديل</a>
+                  <form action="/training/delete/<%= t._id %>" method="POST" style="display:inline;" onsubmit="return confirm('Delete this trainee? / حذف هذا المتدرب؟');">
+                    <button class="btn btn-danger btn-sm">Delete / حذف</button>
                   </form>
                 </td>
               </tr>
             <% }) %>
           <% } else { %>
             <tr>
-              <td colspan="9" class="text-center">No trainees found</td>
+              <td colspan="9" class="text-center">No trainees found / لا يوجد متدربين</td>
             </tr>
           <% } %>
         </tbody>
+
       </table>
     </div>
+    <!-- End Table -->
 
   </div>
-</div>
+  <!-- End Main Content -->
 
-<!-- Excel Export -->
+</div>
+<!-- End Dashboard Container -->
+
+<!-- Scripts -->
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
-document.getElementById('exportBtn')?.addEventListener('click', () => {
+document.getElementById('exportBtn').addEventListener('click', () => {
   const table = document.getElementById('traineeTable');
   const wb = XLSX.utils.table_to_book(table, { sheet: "Trainees" });
   XLSX.writeFile(wb, 'trainees.xlsx');
 });
 
-// ================= CSV Upload via AJAX =================
 const csvForm = document.getElementById('csvForm');
 csvForm.addEventListener('submit', async e => {
   e.preventDefault();
   const formData = new FormData(csvForm);
-
   try {
-    const res = await axios.post('/training/upload-csv', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-
-    if(res.data.success) {
-      Swal.fire('Success', res.data.message, 'success').then(() => location.reload());
+    const res = await axios.post('/training/upload-csv', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+    if(res.data.success){
+      Swal.fire('Success / نجاح', res.data.message, 'success').then(() => location.reload());
     } else {
-      Swal.fire('Error', res.data.message || 'Upload failed', 'error');
+      Swal.fire('Error / خطأ', res.data.message || 'Upload failed / فشل الرفع', 'error');
     }
   } catch(err) {
-    Swal.fire('Error', 'Server error during CSV upload', 'error');
+    Swal.fire('Error / خطأ', 'Server error / خطأ في الخادم', 'error');
   }
 });
 </script>

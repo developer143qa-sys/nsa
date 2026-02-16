@@ -1,72 +1,106 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8">
-  <title>Edit Trainee</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</head>
-<body>
-<div class="container mt-4">
-  <h1>Edit Trainee</h1>
+  <title>Edit Trainee / تعديل متدرب</title>
 
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; padding:0; background-color:#f8f9fa; }
+    .container { max-width: 700px; background-color:#fff; padding:30px; border-radius:10px; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
+    h1 { margin-bottom:30px; }
+    label { font-weight: bold; }
+    .form-check-label { margin-left: 5px; }
+    @media print { .no-print { display:none; } }
+  </style>
+</head>
+<body class="<%= locale === 'ar' ? 'rtl' : '' %>">
+
+<div class="container mt-4">
+
+  <!-- Page Title -->
+  <h1 class="text-center">Edit Trainee / تعديل متدرب</h1>
+
+  <!-- Edit Form -->
   <form id="editForm" action="/training/edit/<%= trainee._id %>" method="POST">
+
     <!-- Full Name -->
-    <label>Full Name</label>
-    <input type="text" name="fullname" class="form-control mb-2" value="<%= trainee.fullname %>" required>
+    <div class="mb-3">
+      <label for="fullname">Full Name / الاسم الكامل</label>
+      <input type="text" name="fullname" id="fullname" class="form-control" value="<%= trainee.fullname %>" required>
+    </div>
 
     <!-- Phone Number -->
-    <label>Phone Number</label>
-    <input type="text" name="phoneNumber" class="form-control mb-2" value="<%= trainee.phoneNumber %>" required>
+    <div class="mb-3">
+      <label for="phoneNumber">Phone Number / رقم الهاتف</label>
+      <input type="text" name="phoneNumber" id="phoneNumber" class="form-control" value="<%= trainee.phoneNumber %>" required>
+    </div>
 
     <!-- Case Type -->
-    <label>Case Type</label>
-    <select name="caseType" id="caseType" class="form-control mb-2" required>
-      <option value="">Select Case Type</option>
-      <option value="completed" <%= trainee.caseType === 'completed' ? 'selected' : '' %>>Completed</option>
-      <option value="delay" <%= trainee.caseType === 'delay' ? 'selected' : '' %>>Delay</option>
-      <option value="exception" <%= trainee.caseType === 'exception' ? 'selected' : '' %>>Exception</option>
-      <option value="exempted" <%= trainee.caseType === 'exempted' ? 'selected' : '' %>>Exempted</option>
-    </select>
+    <div class="mb-3">
+      <label for="caseType">Case Type / نوع الحالة</label>
+      <select name="caseType" id="caseType" class="form-control" required>
+        <option value="">Select Case Type / اختر نوع الحالة</option>
+        <option value="completed" <%= trainee.caseType === 'completed' ? 'selected' : '' %>>Completed / مكتمل</option>
+        <option value="delay" <%= trainee.caseType === 'delay' ? 'selected' : '' %>>Delay / تأجيل</option>
+        <option value="exception" <%= trainee.caseType === 'exception' ? 'selected' : '' %>>Exception / استثناء</option>
+        <option value="exempted" <%= trainee.caseType === 'exempted' ? 'selected' : '' %>>Exempted / معفى</option>
+      </select>
+    </div>
 
     <!-- Reason -->
-    <select name="reason" id="reason" class="form-control mb-2" style="display:none;">
-      <option value="">Select Reason</option>
-    </select>
+    <div class="mb-3" id="reasonDiv" style="display:none;">
+      <label for="reason">Reason / السبب</label>
+      <select name="reason" id="reason" class="form-control">
+        <option value="">Select Reason / اختر السبب</option>
+      </select>
+    </div>
 
     <!-- Batch No -->
-    <div id="batchNoDiv" class="mb-2" style="display:none;">
-      <label>Batch No</label>
-      <input type="text" name="batchNo" class="form-control" value="<%= trainee.batchNo || '' %>">
+    <div class="mb-3" id="batchNoDiv" style="display:none;">
+      <label for="batchNo">Batch No / رقم الدفعة</label>
+      <input type="text" name="batchNo" id="batchNo" class="form-control" value="<%= trainee.batchNo || '' %>">
     </div>
 
     <!-- Force No -->
-    <div id="forceNoDiv" class="mb-2" style="display:none;">
-      <label>Force No</label>
-      <input type="text" name="forceNo" class="form-control" value="<%= trainee.forceNo || '' %>">
+    <div class="mb-3" id="forceNoDiv" style="display:none;">
+      <label for="forceNo">Force No / رقم القوة</label>
+      <input type="text" name="forceNo" id="forceNo" class="form-control" value="<%= trainee.forceNo || '' %>">
     </div>
 
     <!-- Batch Years -->
-    <div id="batchYearsDiv" class="mb-2">
-      <label>Batch Start Year</label>
+    <div class="mb-3" id="batchYearsDiv">
+      <label for="batchStartYear">Batch Start Year / سنة بداية الدفعة</label>
       <input type="number" name="batchStartYear" id="batchStartYear" class="form-control" value="<%= trainee.batchStartYear || '' %>">
-      <label class="mt-2">Batch End Year</label>
+
+      <label class="mt-2" for="batchEndYear">Batch End Year / سنة نهاية الدفعة</label>
       <input type="number" name="batchEndYear" id="batchEndYear" class="form-control" value="<%= trainee.batchEndYear || '' %>">
     </div>
 
     <!-- Active Checkbox -->
-    <div class="form-check mb-2">
-      <input type="checkbox" name="isActive" value="true" class="form-check-input" id="isActive" <%= trainee.isActive ? 'checked' : '' %>>
-      <label class="form-check-label" for="isActive">Active</label>
+    <div class="form-check mb-3">
+      <input type="checkbox" name="isActive" id="isActive" value="true" class="form-check-input" <%= trainee.isActive ? 'checked' : '' %>>
+      <label class="form-check-label" for="isActive">Active / نشط</label>
     </div>
 
-    <button type="submit" class="btn btn-primary mt-3">Update</button>
+    <!-- Submit -->
+    <button type="submit" class="btn btn-primary w-100">Update / تحديث</button>
+
   </form>
+  <!-- End Form -->
+
 </div>
 
+<!-- Scripts -->
 <script>
 const caseType = document.getElementById('caseType');
 const reason = document.getElementById('reason');
+const reasonDiv = document.getElementById('reasonDiv');
 const batchNoDiv = document.getElementById('batchNoDiv');
 const forceNoDiv = document.getElementById('forceNoDiv');
 const batchStartYear = document.getElementById('batchStartYear');
@@ -75,51 +109,50 @@ const isActive = document.getElementById('isActive');
 
 const reasonOptions = {
   delay: [
-    'Considered as the only son',
-    'Completing studies',
-    'Only child of mother',
-    'Only child of father',
-    'Medical deferment',
-    'Accompanying for study abroad',
-    'Sole supporter of mother',
-    'Sole supporter of disabled siblings',
-    'Other'
+    'Considered as the only son / يعتبر الابن الوحيد',
+    'Completing studies / إكمال الدراسة',
+    'Only child of mother / الابن الوحيد للأم',
+    'Only child of father / الابن الوحيد للأب',
+    'Medical deferment / تأجيل طبي',
+    'Accompanying for study abroad / مرافقة للدراسة في الخارج',
+    'Sole supporter of mother / المعيل الوحيد للأم',
+    'Sole supporter of disabled siblings / المعيل الوحيد للأشقاء المعاقين',
+    'Other / أخرى'
   ],
-  exception: ['Active duty soldier', 'Completed basic training'],
-  exempted: ['Medically unfit']
+  exception: [
+    'Active duty soldier / جندي في الخدمة الفعلية',
+    'Completed basic training / أكمل التدريب الأساسي'
+  ],
+  exempted: [
+    'Medically unfit / غير صالح طبياً'
+  ]
 };
 
-// Show/hide Reason, Batch, Force based on Case Type
 function applyCaseType(type) {
-  let selectedReason = reason.value;
-
-  reason.style.display = 'none';
-  reason.innerHTML = '<option value="">Select Reason</option>';
+  reasonDiv.style.display = 'none';
+  reason.innerHTML = '<option value="">Select Reason / اختر السبب</option>';
   batchNoDiv.style.display = 'none';
   forceNoDiv.style.display = 'none';
 
   if(type === 'delay') {
-    reason.style.display = 'block';
+    reasonDiv.style.display = 'block';
     batchNoDiv.style.display = 'block';
     reasonOptions.delay.forEach(r => reason.innerHTML += `<option value="${r}">${r}</option>`);
   } else if(type === 'completed') {
     batchNoDiv.style.display = 'block';
   } else if(type === 'exception') {
-    reason.style.display = 'block';
+    reasonDiv.style.display = 'block';
     forceNoDiv.style.display = 'block';
     reasonOptions.exception.forEach(r => reason.innerHTML += `<option value="${r}">${r}</option>`);
   } else if(type === 'exempted') {
-    reason.style.display = 'block';
+    reasonDiv.style.display = 'block';
     reasonOptions.exempted.forEach(r => reason.innerHTML += `<option value="${r}">${r}</option>`);
   }
 
-  // Restore selected reason
   if("<%= trainee.reason || '' %>") reason.value = "<%= trainee.reason || '' %>";
-
   updateActiveCheckbox();
 }
 
-// Enable/disable Active + remove Case Type required if checked
 function updateActiveCheckbox() {
   const start = Number(batchStartYear.value);
   const end = Number(batchEndYear.value);
@@ -133,13 +166,12 @@ function updateActiveCheckbox() {
     caseType.setAttribute('required', 'required');
   }
 
-  // Auto-enable Active if current year matches start/end
   if(!isActive.checked && (start === currentYear || end === currentYear)) {
     isActive.disabled = false;
   }
 }
 
-// Event listeners
+// Event Listeners
 caseType.addEventListener('change', () => applyCaseType(caseType.value));
 batchStartYear.addEventListener('input', updateActiveCheckbox);
 batchEndYear.addEventListener('input', updateActiveCheckbox);

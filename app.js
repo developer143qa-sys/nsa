@@ -2,11 +2,12 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
-const cookieParser = require('cookie-parser'); // ✅ added
+const cookieParser = require('cookie-parser'); // ✅ for language and sessions
 const connectDB = require('./config/db');
+const i18n = require('i18n'); // ✅ i18n
 
 const traineeRoutes = require('./routes/traineeRoutes');
-const authRoutes = require('./routes/auth'); // 👈 Auth routes
+const authRoutes = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,15 +18,40 @@ const PORT = process.env.PORT || 3000;
 connectDB();
 
 // ----------------------------
+// i18n configuration
+// ----------------------------
+i18n.configure({
+  locales: ['en', 'ar'],
+  directory: path.join(__dirname, 'locales'),
+  defaultLocale: 'en',
+  cookie: 'lang',
+  queryParameter: 'lang',
+  autoReload: true,
+  syncFiles: true
+});
+
+// ----------------------------
 // Middleware
 // ----------------------------
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+app.use(cookieParser());
+app.use(i18n.init);
 
-app.use(express.static(path.join(__dirname, 'public')));
+// Make locale available in all EJS templates
+app.use((req, res, next) => {
+  res.locals.locale = req.getLocale();
+  next();
+});
+
+// Parse JSON and URL-encoded data
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser()); // ✅ important for JWT cookies
+
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Set EJS as template engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 // ----------------------------
 // Session setup
@@ -38,18 +64,25 @@ app.use(session({
 }));
 
 // ----------------------------
+// Language switch route
+// ----------------------------
+app.get('/lang/:lang', (req, res) => {
+  const lang = req.params.lang;
+  res.cookie('lang', lang, { maxAge: 900000, httpOnly: true });
+  res.setLocale(lang);
+  res.redirect('back');
+});
+
+// ----------------------------
 // Routes
 // ----------------------------
-// app.use('/auth', authRoutes); // 👈 Auth routes
 app.use('/auth', authRoutes);
-// no /auth prefix
-
-app.use('/training', traineeRoutes); // Trainee routes
+app.use('/training', traineeRoutes);
 
 // Default route
 app.get('/', (req, res) => res.redirect('/auth/login'));
 
-// 404
+// 404 handler
 app.use((req, res) => res.status(404).send('Page Not Found'));
 
 // ----------------------------
