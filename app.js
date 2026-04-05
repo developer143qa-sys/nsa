@@ -1,10 +1,12 @@
 require('dotenv').config();
+
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
-const cookieParser = require('cookie-parser'); // ✅ for language and sessions
+const cookieParser = require('cookie-parser');
+const i18n = require('i18n');
+
 const connectDB = require('./config/db');
-const i18n = require('i18n'); // ✅ i18n
 
 const traineeRoutes = require('./routes/traineeRoutes');
 const authRoutes = require('./routes/auth');
@@ -36,20 +38,21 @@ i18n.configure({
 app.use(cookieParser());
 app.use(i18n.init);
 
-// Make locale available in all EJS templates
+// ✅ GLOBAL VARIABLES for ALL EJS views
 app.use((req, res, next) => {
   res.locals.locale = req.getLocale();
+  res.locals.currentUrl = req.originalUrl; // ✅ FIXED ERROR
   next();
 });
 
-// Parse JSON and URL-encoded data
+// Parse request body
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Serve static files
+// Static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Set EJS as template engine
+// View engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -60,7 +63,9 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'yourSecretKey',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 1000 * 60 * 60 } // 1 hour
+  cookie: {
+    maxAge: 1000 * 60 * 60 // 1 hour
+  }
 }));
 
 // ----------------------------
@@ -68,9 +73,21 @@ app.use(session({
 // ----------------------------
 app.get('/lang/:lang', (req, res) => {
   const lang = req.params.lang;
-  res.cookie('lang', lang, { maxAge: 900000, httpOnly: true });
-  res.setLocale(lang);
-  res.redirect('back');
+
+  // ✅ better redirect handling
+  const redirect =
+    req.query.redirect ||
+    req.headers.referer ||
+    '/';
+
+  res.cookie('lang', lang, {
+    maxAge: 1000 * 60 * 60,
+    httpOnly: true
+  });
+
+  req.setLocale(lang);
+
+  res.redirect(redirect);
 });
 
 // ----------------------------
@@ -80,12 +97,18 @@ app.use('/auth', authRoutes);
 app.use('/training', traineeRoutes);
 
 // Default route
-app.get('/', (req, res) => res.redirect('/auth/login'));
+app.get('/', (req, res) => {
+  res.redirect('/auth/login');
+});
 
 // 404 handler
-app.use((req, res) => res.status(404).send('Page Not Found'));
+app.use((req, res) => {
+  res.status(404).send('Page Not Found');
+});
 
 // ----------------------------
 // Start server
 // ----------------------------
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+});

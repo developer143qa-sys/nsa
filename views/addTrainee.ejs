@@ -28,6 +28,7 @@
     <!-- Case Type -->
     <select name="caseType" id="caseType" class="form-control mb-2" required>
       <option value=""><%= __('selectCaseType') %></option>
+      <option value="upcoming"><%= __('upcoming') %></option>
       <option value="completed"><%= __('completed') %></option>
       <option value="delay"><%= __('delay') %></option>
       <option value="exception"><%= __('exception') %></option>
@@ -59,12 +60,6 @@
       <input type="number" name="batchEndYear" id="batchEndYear" class="form-control" placeholder="e.g. 2026">
     </div>
 
-    <!-- Active Checkbox -->
-    <div class="form-check mb-2">
-      <input type="checkbox" name="isActive" value="true" class="form-check-input" id="isActive">
-      <label class="form-check-label" for="isActive"><%= __('active') %></label>
-    </div>
-
     <button type="submit" class="btn btn-primary mt-3"><%= __('addTrainee') %></button>
   </form>
 
@@ -86,9 +81,6 @@ const caseTypeSelect = document.getElementById('caseType');
 const reasonSelect = document.getElementById('reason');
 const batchNoDiv = document.getElementById('batchNoDiv');
 const forceNoDiv = document.getElementById('forceNoDiv');
-const batchStartYear = document.getElementById('batchStartYear');
-const batchEndYear = document.getElementById('batchEndYear');
-const isActiveCheckbox = document.getElementById('isActive');
 
 const reasonOptions = {
   delay: [
@@ -130,40 +122,31 @@ function applyCaseType(type) {
   }
 
   reasonSelect.value = selectedReason;
-  updateActiveState();
 }
 
-// Enable/disable Active checkbox and Case Type
-function updateActiveState() {
-  const start = Number(batchStartYear.value);
-  const end = Number(batchEndYear.value);
-  const currentYear = new Date().getFullYear();
+// Auto-select Upcoming based on batchStartYear
+function autoSelectUpcoming() {
+  const start = Number(document.getElementById('batchStartYear').value);
+  const end = Number(document.getElementById('batchEndYear').value);
+  const today = new Date();
+  const currentYear = today.getFullYear();
 
-  if(isActiveCheckbox.checked) {
-    caseTypeSelect.disabled = true;
-    caseTypeSelect.removeAttribute('required');
-  } else {
-    const enableActive = (!caseTypeSelect.value) && (start === currentYear || end === currentYear);
-    isActiveCheckbox.disabled = !enableActive;
-
-    caseTypeSelect.disabled = false;
-    caseTypeSelect.setAttribute('required', 'required');
+  if(start && start > currentYear){
+    caseTypeSelect.value = 'upcoming';
+    applyCaseType('upcoming');
   }
 }
 
-// Event listeners
-caseTypeSelect.addEventListener('change', () => { applyCaseType(caseTypeSelect.value); updateActiveState(); });
-isActiveCheckbox.addEventListener('change', updateActiveState);
-batchStartYear.addEventListener('input', updateActiveState);
-batchEndYear.addEventListener('input', updateActiveState);
+caseTypeSelect.addEventListener('change', () => applyCaseType(caseTypeSelect.value));
+document.getElementById('batchStartYear').addEventListener('input', autoSelectUpcoming);
+document.getElementById('batchEndYear').addEventListener('input', autoSelectUpcoming);
 
 // Submit Single Trainee
 document.getElementById('singleForm').addEventListener('submit', async e => {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(e.target).entries());
-  data.isActive = isActiveCheckbox.checked;
 
-  if(!data.isActive && !data.caseType){
+  if(!data.caseType){
     Swal.fire('<%= __("error") %>', '<%= __("caseTypeRequired") %>', 'error');
     return;
   }
@@ -181,8 +164,6 @@ document.getElementById('singleForm').addEventListener('submit', async e => {
       icon: result.success ? 'success' : 'error'
     });
     if(result.success) e.target.reset();
-    isActiveCheckbox.checked = false;
-    updateActiveState();
   } catch {
     Swal.fire('<%= __("error") %>', '<%= __("serverError") %>', 'error');
   }
@@ -208,7 +189,7 @@ document.getElementById('csvForm').addEventListener('submit', async e => {
 
 // Initialize
 applyCaseType(caseTypeSelect.value);
-updateActiveState();
+autoSelectUpcoming();
 </script>
 
 </body>

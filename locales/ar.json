@@ -40,5 +40,6 @@
 	"error": "error",
 	"caseTypeRequired": "caseTypeRequired",
 	"success": "success",
-	"serverError": "serverError"
+	"serverError": "serverError",
+	"upcoming": "upcoming"
 }

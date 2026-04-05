@@ -4,50 +4,32 @@ const fs = require('fs');
 
 /* ===============================
    Helper: Calculate Status
+   Logic: Upcoming → Active → Completed
 ================================ */
 const calculateStatus = (trainee) => {
   const currentDate = new Date();
-
-  if (trainee.caseType === 'completed') return 'Completed';
-  if (trainee.caseType === 'exception') return 'Exception';
-  if (trainee.caseType === 'exempted') return 'Exempted';
-
-  if (trainee.caseType === 'delay') {
-    const startYear = Number(trainee.batchStartYear);
-    const endYear = Number(trainee.batchEndYear);
-
-    if (!isNaN(startYear) && !isNaN(endYear)) {
-      const batchStartDate = new Date(startYear, 0, 1);
-      const pendingDate = new Date(endYear, 4, 1); // May 1
-
-      if (currentDate < batchStartDate) return 'Delay';
-      else if (currentDate < pendingDate) return 'Delay';
-      else return 'Pending';
-    }
-
-    return 'Delay';
-  }
-
-  return '';
-};
-
-/* ===============================
-   Helper: Determine Active
-================================ */
-const determineActive = (trainee) => {
-  const currentYear = new Date().getFullYear();
   const startYear = Number(trainee.batchStartYear);
   const endYear = Number(trainee.batchEndYear);
 
-  // CaseType selected → cannot be active
-  if (trainee.caseType) return false;
+  // Standard case types
+  if (trainee.caseType === 'completed') return 'Completed';
+  if (trainee.caseType === 'exception') return 'Exception';
+  if (trainee.caseType === 'exempted') return 'Exempted';
+  if (trainee.caseType === 'delay') return 'Delay';
 
-  // Active only if current year matches batch
-  if (startYear === currentYear || endYear === currentYear) {
-    return trainee.isActive === true;
+  // Upcoming / Active / Completed logic
+  if (trainee.caseType === 'upcoming') {
+    if (isNaN(startYear) || isNaN(endYear)) return 'Upcoming';
+
+    const septStart = new Date(startYear, 8, 1); // Sept 1 start
+    const septEnd = new Date(endYear, 8, 1);     // Sept 1 end
+
+    if (currentDate < septStart) return 'Upcoming';
+    if (currentDate >= septStart && currentDate < septEnd) return 'Active';
+    if (currentDate >= septEnd) return 'Completed';
   }
 
-  return false;
+  return '';
 };
 
 /* ===============================
@@ -88,19 +70,19 @@ const getAdminDashboard = async (req, res) => {
     let pendingCount = 0;
     let exceptionCount = 0;
     let exemptedCount = 0;
+    let upcomingCount = 0;
     let activeCount = 0;
 
     trainees.forEach(t => {
       t.status = calculateStatus(t);
-      t.isActive = determineActive(t);
-
-      if (t.isActive) activeCount++;
 
       if (t.status === 'Completed') completedCount++;
       else if (t.status === 'Delay') delayCount++;
       else if (t.status === 'Pending') pendingCount++;
       else if (t.status === 'Exception') exceptionCount++;
       else if (t.status === 'Exempted') exemptedCount++;
+      else if (t.status === 'Upcoming') upcomingCount++;
+      else if (t.status === 'Active') activeCount++;
     });
 
     res.render('admin', {
@@ -110,6 +92,7 @@ const getAdminDashboard = async (req, res) => {
       pendingCount,
       exceptionCount,
       exemptedCount,
+      upcomingCount,
       activeCount,
       totalTrainees: trainees.length,
       search: search || '',
@@ -138,8 +121,7 @@ const addTrainee = async (req, res) => {
       batchNo,
       forceNo,
       batchStartYear,
-      batchEndYear,
-      isActive
+      batchEndYear
     } = req.body;
 
     if (!qid || !fullname || !phoneNumber) {
@@ -153,17 +135,13 @@ const addTrainee = async (req, res) => {
       qid,
       fullname,
       phoneNumber,
+      caseType,
       reason,
       batchNo,
       forceNo,
       batchStartYear,
-      batchEndYear,
-      isActive: isActive === 'true' || isActive === true
+      batchEndYear
     };
-
-    // Only assign caseType if not active
-    if (!trainee.isActive) trainee.caseType = caseType;
-    trainee.isActive = determineActive(trainee);
 
     await TraineeRecord.create(trainee);
 
@@ -182,7 +160,7 @@ const addTrainee = async (req, res) => {
 };
 
 /* ===============================
-   Edit / Update
+   Edit / Update Trainee
 ================================ */
 const getEditPage = async (req, res) => {
   try {
@@ -198,16 +176,11 @@ const getEditPage = async (req, res) => {
 const updateTrainee = async (req, res) => {
   try {
     const traineeId = req.params.id;
-
-    const trainee = {
-      ...req.body,
-      isActive: req.body.isActive === 'true' || req.body.isActive === true
+    const updatedData = {
+      ...req.body
     };
 
-    if (!trainee.isActive) trainee.caseType = req.body.caseType;
-    trainee.isActive = determineActive(trainee);
-
-    await TraineeRecord.findByIdAndUpdate(traineeId, trainee);
+    await TraineeRecord.findByIdAndUpdate(traineeId, updatedData);
     res.redirect('/training/admin');
 
   } catch (err) {
@@ -217,7 +190,7 @@ const updateTrainee = async (req, res) => {
 };
 
 /* ===============================
-   Delete
+   Delete Trainee
 ================================ */
 const deleteTrainee = async (req, res) => {
   try {
@@ -253,11 +226,8 @@ const uploadCSV = async (req, res) => {
         forceNo: item.forceNo?.trim() || '',
         batchStartYear: item.batchStartYear?.trim(),
         batchEndYear: item.batchEndYear?.trim(),
-        isActive: item.isActive === 'true'
+        caseType: item.caseType?.trim()
       };
-
-      if (!trainee.isActive) trainee.caseType = item.caseType?.trim();
-      trainee.isActive = determineActive(trainee);
 
       const exists = await TraineeRecord.findOne({ qid: trainee.qid });
 

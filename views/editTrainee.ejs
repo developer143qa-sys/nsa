@@ -158,16 +158,20 @@ function updateActiveCheckbox() {
   const end = Number(batchEndYear.value);
   const currentYear = new Date().getFullYear();
 
-  if(isActive.checked) {
+  // Disable Case Type if Active is checked
+  if(isActive.checked){
     caseType.disabled = true;
     caseType.removeAttribute('required');
   } else {
     caseType.disabled = false;
-    caseType.setAttribute('required', 'required');
+    caseType.setAttribute('required','required');
   }
 
-  if(!isActive.checked && (start === currentYear || end === currentYear)) {
-    isActive.disabled = false;
+  // Active checkbox editable if batch end year is >= current year
+  if(end >= currentYear){
+    isActive.disabled = false; // allow manual check
+  } else {
+    isActive.disabled = true;  // past batches only
   }
 }
 

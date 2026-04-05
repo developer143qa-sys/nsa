@@ -1,32 +1,23 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="<%= locale %>" dir="<%= locale === 'ar' ? 'rtl' : 'ltr' %>">
 <head>
   <meta charset="UTF-8">
   <title>Admin Dashboard / لوحة التحكم</title>
 
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-
-  <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
   <style>
-    /* General Body */
     body { font-family: Arial, sans-serif; margin:0; padding:0; }
-
-    /* Sidebar */
     .sidebar { width: 250px; min-height: 100vh; background-color: #1f2937; color: white; padding-top: 20px; }
     .sidebar a { color: white; text-decoration: none; }
     .sidebar a:hover { background-color: #374151; }
-
-    /* Cards */
     .card { box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 10px; text-align: center; }
     .card-title { font-weight: bold; }
-
-    /* RTL support */
     body.rtl { direction: rtl; text-align: right; }
-
-    /* Print Styles */
     @media print {
       body * { visibility: hidden; }
       #traineeTable, #traineeTable * { visibility: visible; }
@@ -34,21 +25,11 @@
       #traineeTable th, #traineeTable td { border: 1px solid #000 !important; padding: 5px; }
       .no-print { display: none !important; }
     }
-
-    /* Footer for print */
-    body::after {
-      content: "http://localhost";
-      display: block;
-      text-align: left;
-      font-size: 12px;
-      margin-bottom: 10px;
-    }
-
   </style>
 </head>
 <body class="<%= locale === 'ar' ? 'rtl' : '' %>">
 
-<div class="dashboard-container d-flex">
+<div class="d-flex">
 
   <!-- Sidebar -->
   <div class="sidebar no-print">
@@ -66,24 +47,20 @@
         </li>
       </ul>
     </nav>
-
     <div class="mt-4">
       <a href="/lang/en" class="btn btn-light btn-sm w-100 mb-1">English</a>
       <a href="/lang/ar" class="btn btn-light btn-sm w-100">العربية</a>
     </div>
-
   </div>
   <!-- End Sidebar -->
 
   <!-- Main Content -->
-  <div class="main-content flex-grow-1 p-4">
+  <div class="flex-grow-1 p-4">
 
-    <!-- Page Title -->
     <h1 class="mb-4">Trainee Dashboard / لوحة المتدربين</h1>
 
-    <!-- Cards Row -->
+    <!-- Status Cards -->
     <div class="row mb-4">
-
       <div class="col-md-2">
         <div class="card text-white bg-success mb-3">
           <div class="card-body">
@@ -92,34 +69,14 @@
           </div>
         </div>
       </div>
-
       <div class="col-md-2">
         <div class="card text-white bg-warning mb-3">
           <div class="card-body">
-            <h5 class="card-title">Pending / قيد الانتظار</h5>
+            <h5 class="card-title">Upcoming / قادم</h5>
             <p class="card-text fs-3"><%= pendingCount %></p>
           </div>
         </div>
       </div>
-
-      <div class="col-md-2">
-        <div class="card text-white bg-danger mb-3">
-          <div class="card-body">
-            <h5 class="card-title">Exception / استثناء</h5>
-            <p class="card-text fs-3"><%= exceptionCount %></p>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-2">
-        <div class="card text-white bg-info mb-3">
-          <div class="card-body">
-            <h5 class="card-title">Exempted / معفى</h5>
-            <p class="card-text fs-3"><%= exemptedCount %></p>
-          </div>
-        </div>
-      </div>
-
       <div class="col-md-2">
         <div class="card text-white bg-primary mb-3">
           <div class="card-body">
@@ -128,7 +85,22 @@
           </div>
         </div>
       </div>
-
+      <div class="col-md-2">
+        <div class="card text-white bg-danger mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Exception / استثناء</h5>
+            <p class="card-text fs-3"><%= exceptionCount %></p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="card text-white bg-info mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Exempted / معفى</h5>
+            <p class="card-text fs-3"><%= exemptedCount %></p>
+          </div>
+        </div>
+      </div>
       <div class="col-md-2">
         <div class="card text-white bg-dark mb-3">
           <div class="card-body">
@@ -137,51 +109,39 @@
           </div>
         </div>
       </div>
-
     </div>
-    <!-- End Cards Row -->
 
     <!-- Filter Form -->
     <form class="row g-3 align-items-end mb-3 no-print" method="GET" action="/training/admin">
-
       <div class="col-md-4">
         <label class="form-label">Search / البحث</label>
         <input type="text" name="search" class="form-control" value="<%= search %>">
       </div>
-
       <div class="col-md-4">
         <label class="form-label">Session (Year Range) / الفترة (سنة البداية – سنة النهاية)</label>
         <input type="text" name="session" class="form-control" placeholder="2019 to 2020" value="<%= session %>">
       </div>
-
       <div class="col-md-2">
         <button class="btn btn-primary w-100">Filter / تصفية</button>
       </div>
-
       <div class="col-md-2">
         <button type="button" onclick="window.print()" class="btn btn-secondary w-100">Print / طباعة</button>
       </div>
-
     </form>
-    <!-- End Filter Form -->
 
     <!-- CSV Upload -->
     <div class="mb-4 no-print">
       <form id="csvForm" enctype="multipart/form-data">
         <div class="row g-3 align-items-center">
-
           <div class="col-md-6">
             <input type="file" name="file" accept=".csv" class="form-control" required>
           </div>
-
           <div class="col-md-2">
             <button type="submit" class="btn btn-success w-100">Upload CSV / رفع CSV</button>
           </div>
-
         </div>
       </form>
     </div>
-    <!-- End CSV Upload -->
 
     <!-- Export Excel -->
     <button id="exportBtn" class="btn btn-info mb-3 no-print">Export Excel / تصدير Excel</button>
@@ -195,29 +155,35 @@
             <th>Full Name / الاسم الكامل</th>
             <th>Phone / رقم الهاتف</th>
             <th>Status / الحالة</th>
-            <th>Active / نشط</th>
             <th>Batch No / رقم الدفعة</th>
             <th>Batch Start / سنة البداية</th>
             <th>Batch End / سنة النهاية</th>
-            <th class="no-print">Actions / الإجراءات</th>
+            <th>Actions / الإجراءات</th>
           </tr>
         </thead>
-
         <tbody>
           <% if (trainees.length) { %>
-            <% trainees.forEach(t => { %>
+            <% trainees.forEach(t => { 
+                 const now = new Date();
+                 const startYear = Number(t.batchStartYear);
+                 const endYear = Number(t.batchEndYear);
+                 const sept1 = new Date(startYear, 8, 1);
+                 let status = (t.caseType || '').toLowerCase();
+                 
+                 if(status === 'completed') status = 'Completed / مكتمل';
+                 else if(status === 'exception') status = 'Exception / استثناء';
+                 else if(status === 'exempted') status = 'Exempted / معفى';
+                 else if(status === 'delay') status = 'Delay / تأخير';
+                 else if(isNaN(startYear) || isNaN(endYear)) status = 'Upcoming / قادم';
+                 else if(now < sept1) status = 'Upcoming / قادم';
+                 else if(now >= sept1 && now < new Date(endYear,8,1)) status = 'Active / نشط';
+                 else status = 'Completed / مكتمل';
+            %>
               <tr>
                 <td><%= t.qid %></td>
                 <td><%= t.fullname %></td>
                 <td><%= t.phoneNumber %></td>
-                <td><%= t.status %></td>
-                <td>
-                  <% if (t.isActive) { %>
-                    <span class="badge bg-success">Yes / نعم</span>
-                  <% } else { %>
-                    <span class="badge bg-secondary">No / لا</span>
-                  <% } %>
-                </td>
+                <td><%= status %></td>
                 <td><%= t.batchNo || '' %></td>
                 <td><%= t.batchStartYear || '' %></td>
                 <td><%= t.batchEndYear || '' %></td>
@@ -231,46 +197,39 @@
             <% }) %>
           <% } else { %>
             <tr>
-              <td colspan="9" class="text-center">No trainees found / لا يوجد متدربين</td>
+              <td colspan="8" class="text-center">No trainees found / لا يوجد متدربين</td>
             </tr>
           <% } %>
         </tbody>
-
       </table>
     </div>
-    <!-- End Table -->
 
   </div>
-  <!-- End Main Content -->
-
 </div>
-<!-- End Dashboard Container -->
 
-<!-- Scripts -->
-<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
-document.getElementById('exportBtn').addEventListener('click', () => {
-  const table = document.getElementById('traineeTable');
-  const wb = XLSX.utils.table_to_book(table, { sheet: "Trainees" });
-  XLSX.writeFile(wb, 'trainees.xlsx');
-});
+  // Export Excel
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    const table = document.getElementById('traineeTable');
+    const wb = XLSX.utils.table_to_book(table, { sheet: "Trainees" });
+    XLSX.writeFile(wb, 'trainees.xlsx');
+  });
 
-const csvForm = document.getElementById('csvForm');
-csvForm.addEventListener('submit', async e => {
-  e.preventDefault();
-  const formData = new FormData(csvForm);
-  try {
-    const res = await axios.post('/training/upload-csv', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-    if(res.data.success){
-      Swal.fire('Success / نجاح', res.data.message, 'success').then(() => location.reload());
-    } else {
-      Swal.fire('Error / خطأ', res.data.message || 'Upload failed / فشل الرفع', 'error');
+  // CSV Upload
+  document.getElementById('csvForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    try {
+      const res = await axios.post('/training/upload-csv', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      if(res.data.success){
+        Swal.fire('Success / نجاح', res.data.message, 'success').then(() => location.reload());
+      } else {
+        Swal.fire('Error / خطأ', res.data.message || 'Upload failed / فشل الرفع', 'error');
+      }
+    } catch(err) {
+      Swal.fire('Error / خطأ', 'Server error / خطأ في الخادم', 'error');
     }
-  } catch(err) {
-    Swal.fire('Error / خطأ', 'Server error / خطأ في الخادم', 'error');
-  }
-});
+  });
 </script>
 
 </body>

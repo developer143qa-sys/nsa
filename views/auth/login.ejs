@@ -15,7 +15,9 @@
   </style>
 </head>
 <body class="d-flex justify-content-center align-items-center vh-100">
+
   <div class="card p-4" style="width: 400px;">
+    
     <h3 class="mb-3 text-center"><%= __('login') %></h3>
 
     <% if (error) { %>
@@ -23,34 +25,44 @@
     <% } %>
 
     <form action="/auth/login" method="POST">
+      
       <!-- Email -->
       <div class="mb-3">
-        <label for="email" class="form-label"><%= __('email') %></label>
+        <label class="form-label"><%= __('email') %></label>
         <input type="email" name="email" class="form-control" required>
       </div>
 
       <!-- Password -->
       <div class="mb-3">
-        <label for="password" class="form-label"><%= __('password') %></label>
+        <label class="form-label"><%= __('password') %></label>
         <input type="password" name="password" class="form-control" required>
       </div>
 
-      <button class="btn btn-primary w-100"><%= __('login') %></button>
+      <button class="btn btn-primary w-100">
+        <%= __('login') %>
+      </button>
+
     </form>
 
     <p class="mt-3 text-center">
-      <%= __('noAccount') %> <a href="/auth/register"><%= __('register') %></a>
+      <%= __('noAccount') %> 
+      <a href="/auth/register"><%= __('register') %></a>
     </p>
 
     <hr>
 
-    <!-- Language Switch -->
-   <!-- Language Switch -->
-<!-- <div class="text-center">
-  <a href="/lang/en?redirect=<%= encodeURIComponent(currentUrl) %>" class="lang-switch">English</a> |
-  <a href="/lang/ar?redirect=<%= encodeURIComponent(currentUrl) %>" class="lang-switch">العربية</a>
-</div> -->
+    <!-- ✅ Language Switch (WORKING + SAFE) -->
+    <div class="text-center">
+      <a href="/lang/en?redirect=<%= encodeURIComponent(currentUrl || '/') %>" class="lang-switch">
+        English
+      </a> 
+      | 
+      <a href="/lang/ar?redirect=<%= encodeURIComponent(currentUrl || '/') %>" class="lang-switch">
+        العربية
+      </a>
+    </div>
 
   </div>
+
 </body>
 </html>

@@ -54,4 +54,13 @@ router.get('/lang/:lang', (req, res) => {
   res.redirect(redirectUrl);
 });
 
+
+
+
+
+
+
+
+
+
 module.exports = router;
