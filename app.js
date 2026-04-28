@@ -60,7 +60,7 @@ app.set('views', path.join(__dirname, 'views'));
 // Session setup
 // ----------------------------
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'yourSecretKey',
+ secret: process.env.SESSION_SECRET || 'myDefaultSessionSecret',
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -109,6 +109,6 @@ app.use((req, res) => {
 // ----------------------------
 // Start server
 // ----------------------------
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
