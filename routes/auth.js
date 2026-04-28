@@ -31,6 +31,14 @@ router.get('/login', (req, res) => {
 
 router.post('/login', authController.login);
 
+// Forgot/reset password routes
+router.get('/forgot-password', (req, res) => {
+  renderWithLocale(req, res, 'auth/forgot-password', { error: null, success: null });
+});
+router.post('/forgot-password', authController.forgotPassword);
+router.get('/reset-password/:token', authController.getResetPasswordPage);
+router.post('/reset-password/:token', authController.resetPassword);
+
 // ====================
 // Logout
 // ====================

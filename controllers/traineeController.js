@@ -29,7 +29,16 @@ const calculateStatus = (trainee) => {
     if (currentDate >= septEnd) return 'Completed';
   }
 
-  return '';
+  // Fallback: if batch years exist, calculate dynamically
+  if (!isNaN(startYear) && !isNaN(endYear)) {
+    const septStart = new Date(startYear, 8, 1);
+    const septEnd = new Date(endYear, 8, 1);
+    if (currentDate < septStart) return 'Upcoming';
+    if (currentDate >= septStart && currentDate < septEnd) return 'Active';
+    if (currentDate >= septEnd) return 'Completed';
+  }
+
+  return 'Pending';
 };
 
 /* ===============================
@@ -65,24 +74,28 @@ const getAdminDashboard = async (req, res) => {
 
     const trainees = await TraineeRecord.find(query).lean();
 
-    let completedCount = 0;
-    let delayCount = 0;
-    let pendingCount = 0;
-    let exceptionCount = 0;
-    let exemptedCount = 0;
-    let upcomingCount = 0;
-    let activeCount = 0;
+    // Initialize counters
+    let completedCount = 0,
+        delayCount = 0,
+        pendingCount = 0,
+        exceptionCount = 0,
+        exemptedCount = 0,
+        upcomingCount = 0,
+        activeCount = 0;
 
     trainees.forEach(t => {
-      t.status = calculateStatus(t);
+      t.status = calculateStatus(t); // use helper
 
-      if (t.status === 'Completed') completedCount++;
-      else if (t.status === 'Delay') delayCount++;
-      else if (t.status === 'Pending') pendingCount++;
-      else if (t.status === 'Exception') exceptionCount++;
-      else if (t.status === 'Exempted') exemptedCount++;
-      else if (t.status === 'Upcoming') upcomingCount++;
-      else if (t.status === 'Active') activeCount++;
+      // Count by status
+      switch(t.status){
+        case 'Completed': completedCount++; break;
+        case 'Delay': delayCount++; break;
+        case 'Pending': pendingCount++; break;
+        case 'Exception': exceptionCount++; break;
+        case 'Exempted': exemptedCount++; break;
+        case 'Upcoming': upcomingCount++; break;
+        case 'Active': activeCount++; break;
+      }
     });
 
     res.render('admin', {
@@ -176,13 +189,9 @@ const getEditPage = async (req, res) => {
 const updateTrainee = async (req, res) => {
   try {
     const traineeId = req.params.id;
-    const updatedData = {
-      ...req.body
-    };
-
+    const updatedData = { ...req.body };
     await TraineeRecord.findByIdAndUpdate(traineeId, updatedData);
     res.redirect('/training/admin');
-
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -217,16 +226,25 @@ const uploadCSV = async (req, res) => {
     for (const item of jsonArray) {
       if (!item.qid) continue;
 
+      const caseType = item.caseType?.trim();
+      let reason = item.reason?.trim();
+
+      // Bulk CSV convenience: if reason is missing, keep it as "other"
+      // so records can be imported quickly and adjusted later from edit page.
+      if (!reason) {
+        reason = 'other';
+      }
+
       const trainee = {
         qid: item.qid.trim(),
         fullname: item.fullname?.trim(),
         phoneNumber: item.phoneNumber?.trim(),
-        reason: item.reason?.trim() || '',
+        reason,
         batchNo: item.batchNo?.trim() || '',
         forceNo: item.forceNo?.trim() || '',
         batchStartYear: item.batchStartYear?.trim(),
         batchEndYear: item.batchEndYear?.trim(),
-        caseType: item.caseType?.trim()
+        caseType
       };
 
       const exists = await TraineeRecord.findOne({ qid: trainee.qid });
@@ -257,6 +275,64 @@ const uploadCSV = async (req, res) => {
 };
 
 /* ===============================
+   Active CSV Reconciliation
+================================ */
+const reconcileActiveCSV = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
+    const rows = await csv().fromFile(req.file.path);
+    const activeQids = new Set();
+
+    for (const row of rows) {
+      const qid = row.qid || row.QID || row.Qid;
+      if (qid) activeQids.add(String(qid).trim());
+    }
+
+    const upcoming = await TraineeRecord.find({ caseType: 'upcoming' }).select('_id qid');
+    const matchedIds = [];
+    const unmatchedIds = [];
+
+    for (const trainee of upcoming) {
+      const qid = String(trainee.qid || '').trim();
+      if (activeQids.has(qid)) matchedIds.push(trainee._id);
+      else unmatchedIds.push(trainee._id);
+    }
+
+    let movedToActive = 0;
+    let movedToFallback = 0;
+
+    if (matchedIds.length) {
+      const result = await TraineeRecord.updateMany(
+        { _id: { $in: matchedIds } },
+        { $set: { caseType: 'active' } }
+      );
+      movedToActive = result.modifiedCount || 0;
+    }
+
+    if (unmatchedIds.length) {
+      const result = await TraineeRecord.updateMany(
+        { _id: { $in: unmatchedIds } },
+        { $set: { caseType: 'delay', reason: 'other' } }
+      );
+      movedToFallback = result.modifiedCount || 0;
+    }
+
+    fs.unlinkSync(req.file.path);
+
+    return res.json({
+      success: true,
+      message: `Compared: ${upcoming.length}, Active: ${movedToActive}, Delay: ${movedToFallback} (reason set to other for unmatched)`
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+/* ===============================
    Exports
 ================================ */
 module.exports = {
@@ -266,5 +342,6 @@ module.exports = {
   getEditPage,
   updateTrainee,
   deleteTrainee,
-  uploadCSV
+  uploadCSV,
+  reconcileActiveCSV
 };

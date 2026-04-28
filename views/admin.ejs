@@ -11,12 +11,129 @@
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
   <style>
-    body { font-family: Arial, sans-serif; margin:0; padding:0; }
-    .sidebar { width: 250px; min-height: 100vh; background-color: #1f2937; color: white; padding-top: 20px; }
-    .sidebar a { color: white; text-decoration: none; }
-    .sidebar a:hover { background-color: #374151; }
-    .card { box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 10px; text-align: center; }
-    .card-title { font-weight: bold; }
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%);
+      color: #111827;
+    }
+    .sidebar {
+      width: 310px;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+      color: white;
+      padding: 24px 18px;
+      box-shadow: 4px 0 12px rgba(15, 23, 42, 0.25);
+    }
+    .sidebar a {
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+    .sidebar a:hover {
+      background-color: #334155;
+      transform: translateX(2px);
+    }
+    .sidebar .btn-light {
+      color: #000 !important;
+    }
+    .main-panel {
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      margin: 20px;
+    }
+    .card {
+      border: none;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+      border-radius: 14px;
+      text-align: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+    }
+    .card-title { font-weight: 700; letter-spacing: 0.2px; }
+    .form-control, .btn, .table {
+      border-radius: 10px;
+    }
+    .btn {
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+    .academy-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(90deg, #e0e7ff 0%, #eef2ff 100%);
+      border: 1px solid #c7d2fe;
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+    }
+    .academy-brand img {
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+      border-radius: 8px;
+      background: #fff;
+      border: 1px solid #dbeafe;
+      padding: 4px;
+    }
+    .academy-brand h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+      color: #1e3a8a;
+    }
+    .academy-brand p {
+      margin: 0;
+      color: #334155;
+      font-size: 13px;
+    }
+    .table-section {
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    }
+    #traineeTable {
+      margin-bottom: 0;
+      overflow: hidden;
+      border-radius: 10px;
+    }
+    #traineeTable thead th {
+      vertical-align: middle;
+      white-space: nowrap;
+      border-bottom: 0;
+    }
+    #traineeTable tbody tr:hover {
+      background-color: #f8fafc;
+      transition: background-color 0.2s ease;
+    }
+    .status-badge, .case-badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .badge-active { background: #dcfce7; color: #166534; }
+    .badge-upcoming { background: #fef9c3; color: #854d0e; }
+    .badge-completed { background: #dbeafe; color: #1d4ed8; }
+    .badge-delay { background: #fee2e2; color: #991b1b; }
+    .badge-exception { background: #fce7f3; color: #9d174d; }
+    .badge-exempted { background: #ede9fe; color: #5b21b6; }
+    .badge-pending { background: #e5e7eb; color: #374151; }
+    .badge-default { background: #e2e8f0; color: #334155; }
     body.rtl { direction: rtl; text-align: right; }
     @media print {
       body * { visibility: hidden; }
@@ -55,7 +172,14 @@
   <!-- End Sidebar -->
 
   <!-- Main Content -->
-  <div class="flex-grow-1 p-4">
+  <div class="flex-grow-1 p-4 main-panel">
+    <div class="academy-brand">
+      <img src="/images/download.jfif" alt="National Service Academy Logo">
+      <div>
+        <h2>National Service Academy</h2>
+        <p>Admin Management Dashboard</p>
+      </div>
+    </div>
 
     <h1 class="mb-4">Trainee Dashboard / لوحة المتدربين</h1>
 
@@ -73,7 +197,7 @@
         <div class="card text-white bg-warning mb-3">
           <div class="card-body">
             <h5 class="card-title">Upcoming / قادم</h5>
-            <p class="card-text fs-3"><%= pendingCount %></p>
+            <p class="card-text fs-3"><%= upcomingCount %></p>
           </div>
         </div>
       </div>
@@ -143,6 +267,23 @@
       </form>
     </div>
 
+    <!-- Upcoming vs Active Compare CSV -->
+    <div class="mb-4 no-print">
+      <form id="compareCsvForm" enctype="multipart/form-data">
+        <div class="row g-3 align-items-center">
+          <div class="col-md-6">
+            <input type="file" name="file" accept=".csv" class="form-control" required>
+          </div>
+          <div class="col-md-4">
+            <small class="text-muted">Compare upcoming with active CSV (by QID). Unmatched -> Delay + other</small>
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-warning w-100">Compare CSV</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
     <!-- Export Excel -->
     <button id="exportBtn" class="btn btn-info mb-3 no-print">Export Excel / تصدير Excel</button>
 
@@ -155,6 +296,8 @@
             <th>Full Name / الاسم الكامل</th>
             <th>Phone / رقم الهاتف</th>
             <th>Status / الحالة</th>
+            <th>Case Type / نوع الحالة</th>
+            <th>Reason / السبب</th>
             <th>Batch No / رقم الدفعة</th>
             <th>Batch Start / سنة البداية</th>
             <th>Batch End / سنة النهاية</th>
@@ -163,27 +306,36 @@
         </thead>
         <tbody>
           <% if (trainees.length) { %>
-            <% trainees.forEach(t => { 
-                 const now = new Date();
-                 const startYear = Number(t.batchStartYear);
-                 const endYear = Number(t.batchEndYear);
-                 const sept1 = new Date(startYear, 8, 1);
-                 let status = (t.caseType || '').toLowerCase();
-                 
-                 if(status === 'completed') status = 'Completed / مكتمل';
-                 else if(status === 'exception') status = 'Exception / استثناء';
-                 else if(status === 'exempted') status = 'Exempted / معفى';
-                 else if(status === 'delay') status = 'Delay / تأخير';
-                 else if(isNaN(startYear) || isNaN(endYear)) status = 'Upcoming / قادم';
-                 else if(now < sept1) status = 'Upcoming / قادم';
-                 else if(now >= sept1 && now < new Date(endYear,8,1)) status = 'Active / نشط';
-                 else status = 'Completed / مكتمل';
+            <% trainees.forEach(t => {
+                 let statusLabel = '';
+                 let statusClass = 'badge-default';
+                 let caseClass = 'badge-default';
+                 switch(t.status){
+                   case 'Completed': statusLabel = 'Completed / مكتمل'; statusClass = 'badge-completed'; break;
+                   case 'Active': statusLabel = 'Active / نشط'; statusClass = 'badge-active'; break;
+                   case 'Upcoming': statusLabel = 'Upcoming / قادم'; statusClass = 'badge-upcoming'; break;
+                   case 'Exception': statusLabel = 'Exception / استثناء'; statusClass = 'badge-exception'; break;
+                   case 'Exempted': statusLabel = 'Exempted / معفى'; statusClass = 'badge-exempted'; break;
+                   case 'Delay': statusLabel = 'Delay / تأخير'; statusClass = 'badge-delay'; break;
+                   case 'Pending': statusLabel = 'Pending / معلق'; statusClass = 'badge-pending'; break;
+                   default: statusLabel = t.status;
+                 }
+                 switch((t.caseType || '').toLowerCase()){
+                   case 'completed': caseClass = 'badge-completed'; break;
+                   case 'active': caseClass = 'badge-active'; break;
+                   case 'upcoming': caseClass = 'badge-upcoming'; break;
+                   case 'exception': caseClass = 'badge-exception'; break;
+                   case 'exempted': caseClass = 'badge-exempted'; break;
+                   case 'delay': caseClass = 'badge-delay'; break;
+                 }
             %>
               <tr>
                 <td><%= t.qid %></td>
                 <td><%= t.fullname %></td>
                 <td><%= t.phoneNumber %></td>
-                <td><%= status %></td>
+                <td><span class="status-badge <%= statusClass %>"><%= statusLabel %></span></td>
+                <td><span class="case-badge <%= caseClass %>"><%= t.caseType || '' %></span></td>
+                <td><%= t.reason || '' %></td>
                 <td><%= t.batchNo || '' %></td>
                 <td><%= t.batchStartYear || '' %></td>
                 <td><%= t.batchEndYear || '' %></td>
@@ -197,7 +349,7 @@
             <% }) %>
           <% } else { %>
             <tr>
-              <td colspan="8" class="text-center">No trainees found / لا يوجد متدربين</td>
+              <td colspan="10" class="text-center">No trainees found / لا يوجد متدربين</td>
             </tr>
           <% } %>
         </tbody>
@@ -227,6 +379,24 @@
         Swal.fire('Error / خطأ', res.data.message || 'Upload failed / فشل الرفع', 'error');
       }
     } catch(err) {
+      Swal.fire('Error / خطأ', 'Server error / خطأ في الخادم', 'error');
+    }
+  });
+
+  // Compare upcoming records with active CSV
+  document.getElementById('compareCsvForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    try {
+      const res = await axios.post('/training/reconcile-active-csv', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (res.data.success) {
+        Swal.fire('Success / نجاح', res.data.message, 'success').then(() => location.reload());
+      } else {
+        Swal.fire('Error / خطأ', res.data.message || 'Comparison failed / فشلت المطابقة', 'error');
+      }
+    } catch (err) {
       Swal.fire('Error / خطأ', 'Server error / خطأ في الخادم', 'error');
     }
   });

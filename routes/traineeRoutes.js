@@ -45,5 +45,6 @@ router.get('/upload-csv', (req, res) => {
 
 // Handle CSV upload
 router.post('/upload-csv', upload.single('file'), traineeController.uploadCSV);
+router.post('/reconcile-active-csv', upload.single('file'), traineeController.reconcileActiveCSV);
 
 module.exports = router;
