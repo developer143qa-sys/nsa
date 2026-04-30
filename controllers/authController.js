@@ -54,12 +54,12 @@ exports.login = async (req, res) => {
 
     // ✅ FIXED COOKIE — ab cookie sure save hogi
     res.cookie('token', token, {
-      httpOnly: true,     // JS access block
-      secure: false,      // localhost ke liye false — warna cookie save nahi hoti
-      sameSite: 'lax',    // form submit per cookie drop nahi hoti
-      path: '/',          // har route ke liye accessible
-      maxAge: 24 * 60 * 60 * 1000  // 1 day
-    });
+  httpOnly: true,
+  secure: true,          // ✅ HTTPS ke liye MUST
+  sameSite: 'none',      // ✅ cross-site allow
+  path: '/',
+  maxAge: 24 * 60 * 60 * 1000
+});
 
     // Redirect according to role
     if (user.role === 'admin') {

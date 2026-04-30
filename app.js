@@ -59,14 +59,21 @@ app.set('views', path.join(__dirname, 'views'));
 // ----------------------------
 // Session setup
 // ----------------------------
+ // ----------------------------
+// Session setup
+// ----------------------------
+
+// ✅ ADD THIS LINE HERE
+app.set('trust proxy', 1);
+
 app.use(session({
- secret: process.env.SESSION_SECRET || 'myDefaultSessionSecret',
+  secret: process.env.SESSION_SECRET || 'myDefaultSessionSecret',
   resave: false,
   saveUninitialized: false,
   cookie: {
     maxAge: 1000 * 60 * 60 // 1 hour
   }
-}));
+}))
 
 // ----------------------------
 // Language switch route
