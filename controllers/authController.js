@@ -33,35 +33,45 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
     if (!email || !password) {
       return res.render('auth/login', { error: 'All fields are required' });
     }
 
     const user = await User.findOne({ email });
+
+    // ✅ FIX 1: user check
     if (!user) {
       return res.render('auth/login', { error: 'Invalid credentials' });
     }
 
     const isMatch = await user.isValidPassword(password);
-    console.log('Password match:', isMatch);
 
+    // ✅ FIX 2: password check
     if (!isMatch) {
       return res.render('auth/login', { error: 'Invalid credentials' });
     }
 
     const payload = { id: user._id, role: user.role };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-    // ✅ FIXED COOKIE — ab cookie sure save hogi
+    // ✅ FIX 3: JWT safe check
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET missing in env");
+      return res.render('auth/login', { error: 'Server configuration error' });
+    }
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: '1d'
+    });
+
     res.cookie('token', token, {
-  httpOnly: true,
-  secure: true,          // ✅ HTTPS ke liye MUST
-  sameSite: 'none',      // ✅ cross-site allow
-  path: '/',
-  maxAge: 24 * 60 * 60 * 1000
-});
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 24 * 60 * 60 * 1000
+    });
 
-    // Redirect according to role
     if (user.role === 'admin') {
       return res.redirect('/training/admin');
     } else {
